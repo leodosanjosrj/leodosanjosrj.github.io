@@ -95,15 +95,15 @@ button {
 
   <!-- Tela inicial -->
   <div id="start-screen" style="text-align:center;">
-  <h1 style="margin:12px 0; font-size:28px; font-weight:700;">Letronha</h1>
-  <p class="muted">
-    Clique em INICIAR. Após a contagem, duas letras serão exibidas. 
-    Quem souber uma palavra com as duas letras aperta RESPONDER e fala a palavra.
-  </p>
-  <div style="height:12px"></div>
-  <div style="display:flex; justify-content:center;">
-    <button id="startBtn">INICIAR</button>
-  </div>
+    <h1 style="margin:12px 0; font-size:28px; font-weight:700;">Letronha</h1>
+    <p class="muted">
+      Clique em INICIAR. Após a contagem, duas letras serão exibidas. 
+      Quem souber uma palavra com as duas letras aperta RESPONDER e fala a palavra.
+    </p>
+    <div style="height:12px"></div>
+    <div style="display:flex; justify-content:center;">
+      <button id="startBtn">INICIAR</button>
+    </div>
   </div>
 
   <!-- Contagem regressiva em 2 metades -->
@@ -168,6 +168,8 @@ function pickTwoLetters(){
 function removeDiacritics(str){ return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss'); }
 
 let currentLetters=[],answering=false,score1=0,score2=0;
+let palavrasUsadas = []; // Lista de palavras já usadas
+
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 function isSpeechSupported(){ return !!SpeechRecognition; }
 
@@ -223,6 +225,7 @@ finishBtn.addEventListener('click', ()=>{
 });
 function restartGame(){
   score1=0; score2=0;
+  palavrasUsadas = []; // limpa histórico
   scoreboardEl.style.display='none'; startScreen.style.display='';
 }
 restartBtnA.addEventListener('click', restartGame);
@@ -271,8 +274,21 @@ function startRecognitionForPlayer(player, clearTimeoutCallback){
 
 async function processAnswer(player, spoken){
   const rawWord = spoken.split(/\s+/)[0];
-  if(!rawWord){ updateMessages('Não entendi uma palavra'); answering=false; resp1.disabled=false; resp2.disabled=false; return; }
+  if(!rawWord){ 
+    updateMessages('Não entendi uma palavra'); 
+    answering=false; resp1.disabled=false; resp2.disabled=false; 
+    return; 
+  }
+
   const normalized = removeDiacritics(rawWord.toLowerCase());
+
+  // Verifica se a palavra já foi usada
+  if(palavrasUsadas.includes(normalized)){
+    updateMessages(`⚠️ Palavra repetida — "${rawWord}"`);
+    setTimeout(startRound,1500); // sorteia novas letras
+    return;
+  }
+
   const l1=currentLetters[0].toLowerCase(), l2=currentLetters[1].toLowerCase();
   const contains=normalized.includes(l1)&&normalized.includes(l2);
 
@@ -280,6 +296,7 @@ async function processAnswer(player, spoken){
     updateMessages(`❌ ERRO — "${rawWord}" não contém ${currentLetters.join(', ')}`);
   }else{
     updateMessages(`✅ ACERTO — "${rawWord}" contém ${currentLetters.join(', ')}`);
+    palavrasUsadas.push(normalized); // registra palavra como usada
     if(player===1) score1++; else score2++;
   }
 
