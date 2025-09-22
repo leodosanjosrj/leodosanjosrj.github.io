@@ -56,7 +56,7 @@ button {
   margin:4px 0;
 }
 .muted { color:#6b7280; font-size:14px; text-align:center; padding:4px; }
-#transcript, #verdict { font-weight:600; text-align:center; margin:8px 0; font-size:16px; }
+#transcript, #verdict, #timer { font-weight:600; text-align:center; margin:8px 0; font-size:18px; }
 #scoreboard { text-align:center; padding:12px; }
 </style>
 </head>
@@ -87,6 +87,7 @@ button {
       <button id="resp1">RESPONDER — Jogador 1</button>
     </div>
 
+    <div id="timer"></div>
     <div id="transcript"></div>
     <div id="verdict"></div>
   </div>
@@ -113,7 +114,7 @@ function isSpeechSupported(){ return !!SpeechRecognition; }
 const startBtn=$('startBtn'), countdownEl=$('countdown'), gameEl=$('game'), startScreen=$('start-screen');
 const letters1=$('letters1'), letters2=$('letters2');
 const resp1=$('resp1'), resp2=$('resp2');
-const transcriptEl=$('transcript'), verdictEl=$('verdict');
+const transcriptEl=$('transcript'), verdictEl=$('verdict'), timerEl=$('timer');
 const nextBtn=$('nextBtn'), finishBtn=$('finishBtn');
 const scoreboardEl=$('scoreboard'), score1El=$('score1'), score2El=$('score2'), winnerEl=$('winner'), restartBtn=$('restartBtn');
 
@@ -136,7 +137,7 @@ function startRound(){
   currentLetters=pickTwoLetters();
   letters1.textContent=`${currentLetters[0]}   ${currentLetters[1]}`;
   letters2.textContent=`${currentLetters[0]}   ${currentLetters[1]}`;
-  transcriptEl.textContent=''; verdictEl.textContent='';
+  transcriptEl.textContent=''; verdictEl.textContent=''; timerEl.textContent='';
   answering=false; resp1.disabled=false; resp2.disabled=false;
 }
 
@@ -159,21 +160,42 @@ resp2.addEventListener('click', ()=>onResponderPress(2));
 async function onResponderPress(player){
   if(answering){ transcriptEl.textContent=`Já tem jogador respondendo (Jogador ${answering}).`; return;}
   answering=player; resp1.disabled=true; resp2.disabled=true;
+
+  let timeLeft=3;
+  timerEl.textContent=`Tempo restante: ${timeLeft}s`;
+  const timerInterval=setInterval(()=>{
+    timeLeft--;
+    timerEl.textContent=`Tempo restante: ${timeLeft}s`;
+    if(timeLeft<=0){
+      clearInterval(timerInterval);
+      timerEl.textContent='Tempo esgotado!';
+      verdictEl.textContent='Rodada inválida!';
+      startRound();
+    }
+  },1000);
+
   transcriptEl.textContent=`Jogador ${player}: fale agora!`;
-  if(!isSpeechSupported()){ verdictEl.textContent='Reconhecimento de voz não suportado'; return; }
-  try{ await startRecognitionForPlayer(player); }catch(e){ transcriptEl.textContent='Erro: '+e; answering=false; resp1.disabled=false; resp2.disabled=false;}
+
+  if(!isSpeechSupported()){ verdictEl.textContent='Reconhecimento de voz não suportado'; clearInterval(timerInterval); return; }
+
+  try{
+    await startRecognitionForPlayer(player, clearInterval(timerInterval));
+  }catch(e){ transcriptEl.textContent='Erro: '+e; answering=false; resp1.disabled=false; resp2.disabled=false; clearInterval(timerInterval);}
 }
 
-function startRecognitionForPlayer(player){
+function startRecognitionForPlayer(player, clearTimer){
   return new Promise((resolve,reject)=>{
     const rec=new SpeechRecognition();
     rec.lang='pt-BR'; rec.interimResults=false; rec.maxAlternatives=1;
-    rec.onresult=async(ev)=>{ 
+
+    rec.onresult=async(ev)=>{
+      clearTimer();
       const transcript=ev.results[0][0].transcript.trim();
       transcriptEl.textContent=`Jogador ${player} disse: "${transcript}"`;
-      await processAnswer(player, transcript); resolve();
+      await processAnswer(player, transcript);
+      resolve();
     };
-    rec.onerror=(e)=>{ transcriptEl.textContent='Erro no reconhecimento: '+(e.error||e.message); answering=false; resp1.disabled=false; resp2.disabled=false; reject(e);}
+    rec.onerror=(e)=>{ clearTimer(); transcriptEl.textContent='Erro no reconhecimento: '+(e.error||e.message); answering=false; resp1.disabled=false; resp2.disabled=false; reject(e);}
     try{ rec.start(); }catch(e){ reject(e);}
   });
 }
@@ -188,6 +210,7 @@ async function processAnswer(player, spoken){
   if(!contains){ verdictEl.innerHTML=`<span style="color:#d94664">ERRO — "${rawWord}" não contém ${currentLetters.join(', ')}</span>`;}
   else{ verdictEl.innerHTML=`<span style="color:#059669">ACERTO — "${rawWord}" contém ${currentLetters.join(', ')}</span>`;
        if(player===1) score1++; else score2++; }
+  
   setTimeout(startRound,1500);
 }
 
