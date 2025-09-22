@@ -88,6 +88,29 @@ button {
 .score-content {
   text-align:center;
 }
+
+/* Ajustes apenas para Placar Final */
+#scoreboard h2 {
+  font-size:22px; /* título menor */
+  margin-bottom:6px;
+}
+
+#scoreboard p {
+  font-size:16px; /* pontuação menor */
+  margin:2px 0;
+}
+
+#scoreboard #winnerA,
+#scoreboard #winnerB {
+  font-size:18px;
+  font-weight:700;
+  margin-top:6px;
+}
+
+#scoreboard button {
+  font-size:16px;
+  padding:12px 16px;
+}
 </style>
 </head>
 <body>
@@ -139,7 +162,7 @@ button {
         <h2>Placar Final</h2>
         <p>Jogador 1: <span id="score1a">0</span></p>
         <p>Jogador 2: <span id="score2a">0</span></p>
-        <p id="winnerA" style="font-size:14px;font-weight:700;margin-top:12px"></p>
+        <p id="winnerA"></p>
         <button id="restartBtnA">REINICIAR</button>
       </div>
     </div>
@@ -148,7 +171,7 @@ button {
         <h2>Placar Final</h2>
         <p>Jogador 1: <span id="score1b">0</span></p>
         <p>Jogador 2: <span id="score2b">0</span></p>
-        <p id="winnerB" style="font-size:14px;font-weight:700;margin-top:12px"></p>
+        <p id="winnerB"></p>
         <button id="restartBtnB">REINICIAR</button>
       </div>
     </div>
