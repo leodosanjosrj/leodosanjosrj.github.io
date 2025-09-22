@@ -80,13 +80,8 @@ function pickTwoLetters(){
   while(b===a) b = letters[Math.floor(Math.random()*letters.length)];
   return [a, b];
 }
-function removeDiacritics(str){
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ß/g,'ss');
-}
-function extractFirstWord(transcript){
-  const m = transcript.match(/[A-Za-zÀ-ÿ]+/);
-  return m ? m[0] : '';
-}
+function removeDiacritics(str){ return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ß/g,'ss'); }
+function extractFirstWord(transcript){ const m = transcript.match(/[A-Za-zÀ-ÿ]+/); return m ? m[0] : ''; }
 
 /* --------------------- State --------------------- */
 let currentLetters = [];
@@ -104,9 +99,7 @@ async function loadLocalWordlist(){
     const txt = await res.text();
     wordsSet = new Set(txt.split(/\r?\n/).map(w=>removeDiacritics(w.trim().toLowerCase())).filter(Boolean));
     console.log('Lista local carregada, palavras:', wordsSet.size);
-  }catch(e){
-    console.warn('Lista local não encontrada — fallback para consulta externa.');
-  }
+  }catch(e){ console.warn('Lista local não encontrada — fallback para consulta externa.'); }
 }
 
 /* --------------------- Web Speech API --------------------- */
@@ -124,10 +117,7 @@ async function wordExistsOnline(word){
     if(!pages) return false;
     const page = Object.values(pages)[0];
     return !page.hasOwnProperty('missing');
-  }catch(e){
-    console.warn('erro consulta wiktionary', e);
-    return false;
-  }
+  }catch(e){ console.warn('erro consulta wiktionary', e); return false; }
 }
 async function validateWord(wordRaw){
   const word = removeDiacritics(wordRaw.trim().toLowerCase());
@@ -185,7 +175,7 @@ async function runCountdownAndShowLetters(){
 }
 
 function startRound(){
-  clearTimeout(answerTimeout);
+  clearInterval(answerTimeout);
   currentLetters = pickTwoLetters();
   lettersEl.textContent = `${currentLetters[0]}   ${currentLetters[1]}`;
   transcriptEl.textContent = '';
@@ -216,22 +206,32 @@ async function onResponderPress(player){
   }
   answering = player;
   resp1.disabled = true; resp2.disabled = true;
-  transcriptEl.textContent = `Jogador ${player}: aguardando fala...`;
+  transcriptEl.textContent = `Jogador ${player}: prepare-se para falar...`;
+
   if(!isSpeechSupported()){
     transcriptEl.textContent = 'Reconhecimento de voz não suportado no navegador.';
     return;
   }
 
-  // Contagem de 3 segundos para responder
-  answerTimeout = setTimeout(()=>{
-    verdictEl.innerHTML = `<span style="color:#d94664">Tempo esgotado! Rodada inválida.</span>`;
-    startRound();
-  }, 3000);
+  // Contagem de 3 segundos visível
+  let countdown = 3;
+  statusEl.textContent = `Você tem ${countdown} segundos para responder`;
+
+  answerTimeout = setInterval(()=>{
+    countdown--;
+    if(countdown > 0){
+      statusEl.textContent = `Você tem ${countdown} segundos para responder`;
+    } else {
+      clearInterval(answerTimeout);
+      verdictEl.innerHTML = `<span style="color:#d94664">Tempo esgotado! Rodada inválida.</span>`;
+      startRound();
+    }
+  }, 1000);
 
   try{
     await startRecognitionForPlayer(player);
   }catch(err){
-    clearTimeout(answerTimeout);
+    clearInterval(answerTimeout);
     transcriptEl.textContent = 'Erro no reconhecimento: ' + (err.message||err);
     answering = false;
     resp1.disabled = false;
@@ -247,27 +247,27 @@ function startRecognitionForPlayer(player){
     rec.maxAlternatives = 1;
 
     rec.onresult = async (ev)=>{
-      clearTimeout(answerTimeout);
+      clearInterval(answerTimeout);
       const transcript = ev.results[0][0].transcript.trim();
       transcriptEl.textContent = `Jogador ${player} disse: "${transcript}"`;
       await processAnswer(player, transcript);
       resolve();
     };
     rec.onerror = (e)=>{
-      clearTimeout(answerTimeout);
+      clearInterval(answerTimeout);
       transcriptEl.textContent = `Erro no reconhecimento: ${e.error || e.message || 'unknown'}`;
       answering = false;
       resp1.disabled = false;
       resp2.disabled = false;
       reject(e);
     };
-    rec.onend = ()=>{ clearTimeout(answerTimeout); };
-    try{ rec.start(); }catch(e){ clearTimeout(answerTimeout); reject(e); }
+    rec.onend = ()=>{ clearInterval(answerTimeout); };
+    try{ rec.start(); }catch(e){ clearInterval(answerTimeout); reject(e); }
   });
 }
 
-/* --------------------- Validar palavra --------------------- */
 async function processAnswer(player, spoken){
+  clearInterval(answerTimeout);
   const rawWord = extractFirstWord(spoken) || spoken.split(/\s+/)[0] || spoken;
   if(!rawWord){
     verdictEl.textContent = 'Não entendi uma palavra válida.';
@@ -276,6 +276,7 @@ async function processAnswer(player, spoken){
     resp2.disabled = false;
     return;
   }
+
   const normalized = removeDiacritics(rawWord.toLowerCase());
   const l1 = currentLetters[0].toLowerCase();
   const l2 = currentLetters[1].toLowerCase();
@@ -292,10 +293,11 @@ async function processAnswer(player, spoken){
     if(player === 1) score1++;
     if(player === 2) score2++;
   }
+
   setTimeout(()=>{ startRound(); }, 2000);
 }
 
-/* --------------------- Finalizar rodada --------------------- */
+/* --------------------- Finalizar --------------------- */
 finishBtn.addEventListener('click', ()=>{
   gameEl.style.display = 'none';
   scoreboardEl.style.display = '';
@@ -312,6 +314,11 @@ restartBtn.addEventListener('click', ()=>{
   scoreboardEl.style.display = 'none';
   startScreen.style.display = '';
 });
+
+/* --------------------- Inicialização --------------------- */
+if(!isSpeechSupported()){
+  $('start-screen').querySelector('.muted').textContent += ' (Seu navegador pode não suportar reconhecimento de voz.)';
+}
 </script>
 </body>
 </html>
