@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Letras Rápidas</title>
+<title>Letronha</title>
 <style>
 :root {
   font-family: system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
@@ -28,6 +28,8 @@ body {
   flex-direction:column;
   min-height:80vh;
 }
+
+/* Layout de metade da tela */
 .half-screen {
   flex:1;
   display:flex;
@@ -39,7 +41,15 @@ body {
 }
 .half-screen.upper { transform: rotate(180deg); background:#e5e7eb; }
 .half-screen.lower { background:#fef3c7; }
-#letters1, #letters2 { font-size:56px; font-weight:700; letter-spacing:18px; text-align:center; margin:12px 0; }
+
+#letters1, #letters2 { 
+  font-size:56px; 
+  font-weight:700; 
+  letter-spacing:18px; 
+  text-align:center; 
+  margin:12px 0; 
+}
+
 button {
   background: var(--accent);
   color:#fff;
@@ -57,20 +67,46 @@ button {
 }
 .muted { color:#6b7280; font-size:14px; text-align:center; padding:4px; }
 #transcript, #verdict { font-weight:600; text-align:center; margin:8px 0; font-size:18px; }
-#scoreboard { text-align:center; padding:12px; }
+
+/* Countdown e Scoreboard também divididos */
+#countdown, #scoreboard {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+.countdown-half, .score-half {
+  flex:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:48px;
+  font-weight:700;
+}
+.countdown-half.upper, .score-half.upper { transform: rotate(180deg); background:#e5e7eb; }
+.countdown-half.lower, .score-half.lower { background:#fef3c7; }
+
+.score-content {
+  text-align:center;
+}
 </style>
 </head>
 <body>
 <div class="card">
 
+  <!-- Tela inicial -->
   <div id="start-screen">
     <p class="muted">Clique em INICIAR. Após a contagem, duas letras serão exibidas. Quem souber uma palavra com as duas letras aperta RESPONDER e fala a palavra.</p>
     <div style="height:12px"></div>
     <button id="startBtn">INICIAR</button>
   </div>
 
-  <div id="countdown" style="display:none;font-size:36px;margin-top:12px;text-align:center"></div>
+  <!-- Contagem regressiva em 2 metades -->
+  <div id="countdown" style="display:none;">
+    <div class="countdown-half upper" id="count2"></div>
+    <div class="countdown-half lower" id="count1"></div>
+  </div>
 
+  <!-- Jogo -->
   <div id="game" style="display:none;flex:1;flex-direction:column;">
     <div class="half-screen upper">
       <div id="letters2"></div>
@@ -90,12 +126,26 @@ button {
     </div>
   </div>
 
+  <!-- Placar Final em 2 metades -->
   <div id="scoreboard" style="display:none;">
-    <h2>Placar Final</h2>
-    <p>Jogador 1: <span id="score1">0</span></p>
-    <p>Jogador 2: <span id="score2">0</span></p>
-    <p id="winner" style="font-size:20px;font-weight:700;margin-top:12px"></p>
-    <button id="restartBtn">REINICIAR</button>
+    <div class="score-half upper">
+      <div class="score-content">
+        <h2>Placar Final</h2>
+        <p>Jogador 1: <span id="score1a">0</span></p>
+        <p>Jogador 2: <span id="score2a">0</span></p>
+        <p id="winnerA" style="font-size:20px;font-weight:700;margin-top:12px"></p>
+        <button id="restartBtnA">REINICIAR</button>
+      </div>
+    </div>
+    <div class="score-half lower">
+      <div class="score-content">
+        <h2>Placar Final</h2>
+        <p>Jogador 1: <span id="score1b">0</span></p>
+        <p>Jogador 2: <span id="score2b">0</span></p>
+        <p id="winnerB" style="font-size:20px;font-weight:700;margin-top:12px"></p>
+        <button id="restartBtnB">REINICIAR</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -120,7 +170,11 @@ const letters1=$('letters1'), letters2=$('letters2');
 const resp1=$('resp1'), resp2=$('resp2');
 const message1=$('message1'), message2=$('message2');
 const nextBtn=$('nextBtn'), finishBtn=$('finishBtn');
-const scoreboardEl=$('scoreboard'), score1El=$('score1'), score2El=$('score2'), winnerEl=$('winner'), restartBtn=$('restartBtn');
+const scoreboardEl=$('scoreboard');
+const score1a=$('score1a'), score2a=$('score2a'), winnerA=$('winnerA');
+const score1b=$('score1b'), score2b=$('score2b'), winnerB=$('winnerB');
+const restartBtnA=$('restartBtnA'), restartBtnB=$('restartBtnB');
+const count1=$('count1'), count2=$('count2');
 
 startBtn.addEventListener('click', async()=>{
   startScreen.style.display='none';
@@ -130,8 +184,14 @@ startBtn.addEventListener('click', async()=>{
 async function runCountdownAndShowLetters(){
   countdownEl.style.display='';
   gameEl.style.display='none';
-  for(let i=3;i>0;i--){ countdownEl.textContent=i; await sleep(700);}
-  countdownEl.textContent='JÁ!'; await sleep(500);
+  for(let i=3;i>0;i--){
+    count1.textContent=i;
+    count2.textContent=i;
+    await sleep(700);
+  }
+  count1.textContent='JÁ!';
+  count2.textContent='JÁ!';
+  await sleep(500);
   countdownEl.style.display='none';
   gameEl.style.display='flex';
   startRound();
@@ -148,16 +208,19 @@ function startRound(){
 
 nextBtn.addEventListener('click', startRound);
 finishBtn.addEventListener('click', ()=>{
-  gameEl.style.display='none'; scoreboardEl.style.display='';
-  score1El.textContent=score1; score2El.textContent=score2;
-  if(score1>score2) winnerEl.textContent='JOGADOR 1 VENCEU';
-  else if(score2>score1) winnerEl.textContent='JOGADOR 2 VENCEU';
-  else winnerEl.textContent='EMPATE!';
+  gameEl.style.display='none'; scoreboardEl.style.display='flex';
+  score1a.textContent=score1; score2a.textContent=score2;
+  score1b.textContent=score1; score2b.textContent=score2;
+  if(score1>score2){ winnerA.textContent='JOGADOR 1 VENCEU'; winnerB.textContent='JOGADOR 1 VENCEU'; }
+  else if(score2>score1){ winnerA.textContent='JOGADOR 2 VENCEU'; winnerB.textContent='JOGADOR 2 VENCEU'; }
+  else { winnerA.textContent='EMPATE!'; winnerB.textContent='EMPATE!'; }
 });
-restartBtn.addEventListener('click', ()=>{
+function restartGame(){
   score1=0; score2=0;
   scoreboardEl.style.display='none'; startScreen.style.display='';
-});
+}
+restartBtnA.addEventListener('click', restartGame);
+restartBtnB.addEventListener('click', restartGame);
 
 resp1.addEventListener('click', ()=>onResponderPress(1));
 resp2.addEventListener('click', ()=>onResponderPress(2));
@@ -217,7 +280,7 @@ async function processAnswer(player, spoken){
   setTimeout(startRound,1500);
 }
 
-// Atualiza mensagem para as duas telas
+// Atualiza mensagens para as duas telas
 function updateMessages(msg){
   message1.textContent = msg;
   message2.textContent = msg;
