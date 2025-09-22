@@ -23,25 +23,24 @@ body {
   background:#fff;
   border-radius:12px;
   box-shadow:0 6px 24px rgba(2,6,23,0.08);
-  padding:12px;
+  padding:0;
   display:flex;
   flex-direction:column;
   min-height:80vh;
 }
 h1 { text-align:center; font-size:20px; margin:0 0 12px; }
-#letters { font-size:56px; font-weight:700; letter-spacing:18px; text-align:center; margin:18px 0; }
-
 .half-screen {
   flex:1;
   display:flex;
   flex-direction:column;
-  justify-content:flex-end;
+  justify-content:center;
   align-items:center;
-  background:#e5e7eb;
-  border-radius:8px;
   padding:8px;
-  margin:4px 0;
+  position:relative;
 }
+.half-screen.upper { transform: rotate(180deg); background:#e5e7eb; }
+.half-screen.lower { background:#fef3c7; }
+#letters { font-size:56px; font-weight:700; letter-spacing:18px; text-align:center; margin:12px 0; }
 button {
   background: var(--accent);
   color:#fff;
@@ -54,11 +53,12 @@ button {
 .middle-buttons {
   display:flex;
   justify-content:space-around;
-  margin:8px 0;
+  margin:4px 0;
 }
-.muted { color:#6b7280; font-size:14px; text-align:center; }
+.muted { color:#6b7280; font-size:14px; text-align:center; padding:4px; }
 #transcript { margin-top:8px; font-weight:600; text-align:center; }
 #verdict { margin-top:8px; font-size:18px; text-align:center; }
+#scoreboard { text-align:center; padding:12px; }
 </style>
 </head>
 <body>
@@ -67,17 +67,16 @@ button {
 
   <div id="start-screen">
     <p class="muted">Clique em INICIAR. Após a contagem, duas letras serão exibidas. Quem souber uma palavra com as duas letras aperta RESPONDER e fala a palavra.</p>
-    <div style="height:18px"></div>
+    <div style="height:12px"></div>
     <button id="startBtn">INICIAR</button>
   </div>
 
   <div id="countdown" style="display:none;font-size:36px;margin-top:12px;text-align:center"></div>
 
   <div id="game" style="display:none;flex:1;flex-direction:column;">
-    <div id="letters"></div>
-
-    <div class="half-screen">
-      <button id="resp1">RESPONDER — Jogador 1</button>
+    <div class="half-screen upper">
+      <div id="letters2"></div>
+      <button id="resp2">RESPONDER — Jogador 2</button>
     </div>
 
     <div class="middle-buttons">
@@ -85,15 +84,16 @@ button {
       <button id="finishBtn" style="background:#d94664">FINALIZAR</button>
     </div>
 
-    <div class="half-screen">
-      <button id="resp2">RESPONDER — Jogador 2</button>
+    <div class="half-screen lower">
+      <div id="letters1"></div>
+      <button id="resp1">RESPONDER — Jogador 1</button>
     </div>
 
     <div id="transcript"></div>
     <div id="verdict"></div>
   </div>
 
-  <div id="scoreboard" style="display:none;text-align:center">
+  <div id="scoreboard" style="display:none;">
     <h2>Placar Final</h2>
     <p>Jogador 1: <span id="score1">0</span></p>
     <p>Jogador 2: <span id="score2">0</span></p>
@@ -113,7 +113,8 @@ const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecogni
 function isSpeechSupported(){ return !!SpeechRecognition; }
 
 const startBtn=$('startBtn'), countdownEl=$('countdown'), gameEl=$('game'), startScreen=$('start-screen');
-const lettersEl=$('letters'), resp1=$('resp1'), resp2=$('resp2');
+const letters1=$('letters1'), letters2=$('letters2');
+const resp1=$('resp1'), resp2=$('resp2');
 const transcriptEl=$('transcript'), verdictEl=$('verdict');
 const nextBtn=$('nextBtn'), finishBtn=$('finishBtn');
 const scoreboardEl=$('scoreboard'), score1El=$('score1'), score2El=$('score2'), winnerEl=$('winner'), restartBtn=$('restartBtn');
@@ -135,7 +136,8 @@ async function runCountdownAndShowLetters(){
 
 function startRound(){
   currentLetters=pickTwoLetters();
-  lettersEl.textContent=`${currentLetters[0]}   ${currentLetters[1]}`;
+  letters1.textContent=`${currentLetters[0]}   ${currentLetters[1]}`;
+  letters2.textContent=`${currentLetters[0]}   ${currentLetters[1]}`;
   transcriptEl.textContent=''; verdictEl.textContent='';
   answering=false; resp1.disabled=false; resp2.disabled=false;
 }
@@ -161,7 +163,7 @@ async function onResponderPress(player){
   answering=player; resp1.disabled=true; resp2.disabled=true;
   transcriptEl.textContent=`Jogador ${player}: fale agora!`;
   if(!isSpeechSupported()){ verdictEl.textContent='Reconhecimento de voz não suportado'; return; }
-  try{ await startRecognitionForPlayer(player); }catch(e){ transcriptEl.textContent='Erro no reconhecimento: '+e; answering=false; resp1.disabled=false; resp2.disabled=false;}
+  try{ await startRecognitionForPlayer(player); }catch(e){ transcriptEl.textContent='Erro: '+e; answering=false; resp1.disabled=false; resp2.disabled=false;}
 }
 
 function startRecognitionForPlayer(player){
