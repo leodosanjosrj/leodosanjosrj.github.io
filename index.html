@@ -11,7 +11,7 @@
     h1{margin:0 0 12px;font-size:20px}
     #letters{font-size:56px;font-weight:700;letter-spacing:18px;text-align:center;margin:18px 0}
     .center{text-align:center}
-    button{background:var(--accent);color:#fff;border:0;padding:12px 16px;border-radius:10px;font-weight:600}
+    button{background:var(--accent);color:#fff;border:0;padding:12px 16px;border-radius:10px;font-weight:600;cursor:pointer}
     .muted{color:#6b7280;font-size:14px}
     .players{display:flex;gap:10px;justify-content:center;margin-top:12px}
     .resp{flex:1;background:#111827}
@@ -25,14 +25,17 @@
   <div class="card">
     <h1>Letras Rápidas</h1>
 
+    <!-- Tela inicial -->
     <div id="start-screen" class="center">
       <p class="muted">Clique em INICIAR. Após a contagem, duas letras serão exibidas. Quem souber uma palavra com as duas letras aperta RESPONDER e fala a palavra.</p>
       <div style="height:18px"></div>
       <button id="startBtn">INICIAR</button>
     </div>
 
+    <!-- Contagem regressiva -->
     <div id="countdown" class="center" style="display:none;font-size:36px;margin-top:12px"></div>
 
+    <!-- Tela do jogo -->
     <div id="game" style="display:none">
       <div id="letters" aria-live="polite"></div>
       <div id="status" class="center muted"></div>
@@ -50,27 +53,33 @@
         <div style="height:8px"></div>
         <button id="manualCheck">Verificar</button>
       </div>
+
+      <button id="finishBtn" style="margin-top:16px;background:#d94664">FINALIZAR</button>
+    </div>
+
+    <!-- Tela do placar -->
+    <div id="scoreboard" style="display:none;text-align:center">
+      <h2>Placar Final</h2>
+      <p>Jogador 1: <span id="score1">0</span></p>
+      <p>Jogador 2: <span id="score2">0</span></p>
+      <button id="restartBtn">REINICIAR</button>
     </div>
   </div>
 
 <script>
 /* --------------------- Utils --------------------- */
 const $ = id => document.getElementById(id);
-
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
-
 function pickTwoLetters(){
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const letters = "ABCDEFGHILMNOPQRSTUVXZ"; // sem K, W e Y
   let a = letters[Math.floor(Math.random()*letters.length)];
   let b = letters[Math.floor(Math.random()*letters.length)];
   while(b===a) b = letters[Math.floor(Math.random()*letters.length)];
   return [a, b];
 }
-
 function removeDiacritics(str){
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ß/g,'ss');
 }
-
 function extractFirstWord(transcript){
   const m = transcript.match(/[A-Za-zÀ-ÿ]+/);
   return m ? m[0] : '';
@@ -78,8 +87,10 @@ function extractFirstWord(transcript){
 
 /* --------------------- State --------------------- */
 let currentLetters = [];
-let answering = false; // lock so only first responder is accepted
-let wordsSet = null; // local dictionary (if provided)
+let answering = false; 
+let wordsSet = null; 
+let score1 = 0;
+let score2 = 0;
 
 /* --------------------- Load local wordlist (optional) --------------------- */
 async function loadLocalWordlist(){
@@ -94,14 +105,12 @@ async function loadLocalWordlist(){
   }
 }
 
-/* --------------------- Web Speech API wrapper --------------------- */
+/* --------------------- Web Speech API --------------------- */
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
-
 function isSpeechSupported(){ return !!SpeechRecognition; }
 
-/* --------------------- Validation: local or remote (Wiktionary) --------------------- */
+/* --------------------- Validation --------------------- */
 async function wordExistsOnline(word){
-  // consulta pt.wiktionary.org via MediaWiki API (origin=* para CORS)
   try{
     const url = `https://pt.wiktionary.org/w/api.php?action=query&titles=${encodeURIComponent(word)}&format=json&origin=*`;
     const r = await fetch(url);
@@ -116,17 +125,13 @@ async function wordExistsOnline(word){
     return false;
   }
 }
-
 async function validateWord(wordRaw){
   const word = removeDiacritics(wordRaw.trim().toLowerCase());
   if(!word) return {exists:false, reason:'vazio'};
-
-  // 1) try local set
   if(wordsSet){
     const ok = wordsSet.has(word);
     return {exists: ok, source: 'local', normalized: word};
   }
-  // 2) fallback: wiktionary
   const okOnline = await wordExistsOnline(word);
   return {exists: okOnline, source: 'wiktionary', normalized: word};
 }
@@ -145,6 +150,11 @@ const verdictEl = $('verdict');
 const manualBlock = $('manual');
 const manualInput = $('manualInput');
 const manualCheck = $('manualCheck');
+const finishBtn = $('finishBtn');
+const scoreboardEl = $('scoreboard');
+const score1El = $('score1');
+const score2El = $('score2');
+const restartBtn = $('restartBtn');
 
 startBtn.addEventListener('click', async ()=>{
   startScreen.style.display = 'none';
@@ -180,13 +190,12 @@ function startRound(){
   resp2.disabled = false;
 }
 
-/* When a player presses RESPONDER */
 resp1.addEventListener('click', ()=>onResponderPress(1));
 resp2.addEventListener('click', ()=>onResponderPress(2));
 manualCheck.addEventListener('click', async ()=>{
   const w = manualInput.value.trim();
   if(!w) return alert('Digite uma palavra.');
-  await processAnswer(0, w); // 0 = manual
+  await processAnswer(0, w); 
 });
 
 async function onResponderPress(player){
@@ -216,7 +225,6 @@ function startRecognitionForPlayer(player){
     rec.lang = 'pt-BR';
     rec.interimResults = false;
     rec.maxAlternatives = 1;
-    // timeout safety: stop after 6s
     let timeout = setTimeout(()=>{ try{ rec.stop(); }catch(e){}; }, 6000);
 
     rec.onresult = async (ev)=>{
@@ -233,19 +241,11 @@ function startRecognitionForPlayer(player){
       resp1.disabled = false; resp2.disabled = false;
       reject(e);
     };
-    rec.onend = ()=>{
-      clearTimeout(timeout);
-    };
-    try{
-      rec.start();
-    }catch(e){
-      clearTimeout(timeout);
-      reject(e);
-    }
+    rec.onend = ()=>{ clearTimeout(timeout); };
+    try{ rec.start(); }catch(e){ clearTimeout(timeout); reject(e); }
   });
 }
 
-/* Validate spelled word: contains both letters + exists in dictionary */
 async function processAnswer(player, spoken){
   const rawWord = extractFirstWord(spoken) || spoken.split(/\s+/)[0] || spoken;
   if(!rawWord){
@@ -254,14 +254,10 @@ async function processAnswer(player, spoken){
     resp1.disabled = false; resp2.disabled = false;
     return;
   }
-
-  // check letters
   const normalized = removeDiacritics(rawWord.toLowerCase());
   const l1 = currentLetters[0].toLowerCase();
   const l2 = currentLetters[1].toLowerCase();
   const contains = normalized.includes(l1) && normalized.includes(l2);
-
-  // check dictionary
   verdictEl.textContent = 'Validando palavra...';
   const dict = await validateWord(rawWord);
 
@@ -271,15 +267,29 @@ async function processAnswer(player, spoken){
     verdictEl.innerHTML = `<span style="color:#d94664">ERRO — a palavra "${rawWord}" não foi encontrada no dicionário (fonte: ${dict.source}).</span>`;
   }else{
     verdictEl.innerHTML = `<span style="color:#059669">ACERTO — "${rawWord}" contém ${currentLetters.join(' e ')} e existe (fonte: ${dict.source}).</span>`;
+    if(player === 1) score1++;
+    if(player === 2) score2++;
   }
-
-  // liberar para próxima rodada após 2s
   setTimeout(()=>{ startRound(); }, 2000);
 }
 
-/* --------------------- Start UI state --------------------- */
+/* --------------------- Finalizar & Reiniciar --------------------- */
+finishBtn.addEventListener('click', ()=>{
+  gameEl.style.display = 'none';
+  scoreboardEl.style.display = '';
+  score1El.textContent = score1;
+  score2El.textContent = score2;
+});
+
+restartBtn.addEventListener('click', ()=>{
+  score1 = 0;
+  score2 = 0;
+  scoreboardEl.style.display = 'none';
+  startScreen.style.display = '';
+});
+
+/* --------------------- Info inicial --------------------- */
 if(!isSpeechSupported()){
-  // inform user
   $('start-screen').querySelector('.muted').textContent += ' (Seu navegador pode não suportar reconhecimento de voz.)';
 }
 </script>
