@@ -19,6 +19,7 @@
     #transcript{margin-top:12px;font-weight:600}
     #verdict{margin-top:8px;font-size:18px}
     input[type="text"]{width:100%;padding:10px;border-radius:8px;border:1px solid #d1d5db}
+    #nextBtn{background:#f59e0b;margin-top:8px}
   </style>
 </head>
 <body>
@@ -54,6 +55,7 @@
         <button id="manualCheck">Verificar</button>
       </div>
 
+      <button id="nextBtn">PRÓXIMA</button>
       <button id="finishBtn" style="margin-top:16px;background:#d94664">FINALIZAR</button>
     </div>
 
@@ -62,6 +64,7 @@
       <h2>Placar Final</h2>
       <p>Jogador 1: <span id="score1">0</span></p>
       <p>Jogador 2: <span id="score2">0</span></p>
+      <p id="winner" style="font-size:20px;font-weight:700;margin-top:12px"></p>
       <button id="restartBtn">REINICIAR</button>
     </div>
   </div>
@@ -91,6 +94,7 @@ let answering = false;
 let wordsSet = null; 
 let score1 = 0;
 let score2 = 0;
+let answerTimeout = null;
 
 /* --------------------- Load local wordlist (optional) --------------------- */
 async function loadLocalWordlist(){
@@ -151,9 +155,11 @@ const manualBlock = $('manual');
 const manualInput = $('manualInput');
 const manualCheck = $('manualCheck');
 const finishBtn = $('finishBtn');
+const nextBtn = $('nextBtn');
 const scoreboardEl = $('scoreboard');
 const score1El = $('score1');
 const score2El = $('score2');
+const winnerEl = $('winner');
 const restartBtn = $('restartBtn');
 
 startBtn.addEventListener('click', async ()=>{
@@ -179,6 +185,7 @@ async function runCountdownAndShowLetters(){
 }
 
 function startRound(){
+  clearTimeout(answerTimeout);
   currentLetters = pickTwoLetters();
   lettersEl.textContent = `${currentLetters[0]}   ${currentLetters[1]}`;
   transcriptEl.textContent = '';
@@ -190,6 +197,10 @@ function startRound(){
   resp2.disabled = false;
 }
 
+/* --------------------- PRÓXIMA --------------------- */
+nextBtn.addEventListener('click', startRound);
+
+/* --------------------- Jogador responde --------------------- */
 resp1.addEventListener('click', ()=>onResponderPress(1));
 resp2.addEventListener('click', ()=>onResponderPress(2));
 manualCheck.addEventListener('click', async ()=>{
@@ -210,12 +221,21 @@ async function onResponderPress(player){
     transcriptEl.textContent = 'Reconhecimento de voz não suportado no navegador.';
     return;
   }
+
+  // Contagem de 3 segundos para responder
+  answerTimeout = setTimeout(()=>{
+    verdictEl.innerHTML = `<span style="color:#d94664">Tempo esgotado! Rodada inválida.</span>`;
+    startRound();
+  }, 3000);
+
   try{
     await startRecognitionForPlayer(player);
   }catch(err){
+    clearTimeout(answerTimeout);
     transcriptEl.textContent = 'Erro no reconhecimento: ' + (err.message||err);
     answering = false;
-    resp1.disabled = false; resp2.disabled = false;
+    resp1.disabled = false;
+    resp2.disabled = false;
   }
 }
 
@@ -225,33 +245,35 @@ function startRecognitionForPlayer(player){
     rec.lang = 'pt-BR';
     rec.interimResults = false;
     rec.maxAlternatives = 1;
-    let timeout = setTimeout(()=>{ try{ rec.stop(); }catch(e){}; }, 6000);
 
     rec.onresult = async (ev)=>{
-      clearTimeout(timeout);
+      clearTimeout(answerTimeout);
       const transcript = ev.results[0][0].transcript.trim();
       transcriptEl.textContent = `Jogador ${player} disse: "${transcript}"`;
       await processAnswer(player, transcript);
       resolve();
     };
     rec.onerror = (e)=>{
-      clearTimeout(timeout);
+      clearTimeout(answerTimeout);
       transcriptEl.textContent = `Erro no reconhecimento: ${e.error || e.message || 'unknown'}`;
       answering = false;
-      resp1.disabled = false; resp2.disabled = false;
+      resp1.disabled = false;
+      resp2.disabled = false;
       reject(e);
     };
-    rec.onend = ()=>{ clearTimeout(timeout); };
-    try{ rec.start(); }catch(e){ clearTimeout(timeout); reject(e); }
+    rec.onend = ()=>{ clearTimeout(answerTimeout); };
+    try{ rec.start(); }catch(e){ clearTimeout(answerTimeout); reject(e); }
   });
 }
 
+/* --------------------- Validar palavra --------------------- */
 async function processAnswer(player, spoken){
   const rawWord = extractFirstWord(spoken) || spoken.split(/\s+/)[0] || spoken;
   if(!rawWord){
     verdictEl.textContent = 'Não entendi uma palavra válida.';
     answering = false;
-    resp1.disabled = false; resp2.disabled = false;
+    resp1.disabled = false;
+    resp2.disabled = false;
     return;
   }
   const normalized = removeDiacritics(rawWord.toLowerCase());
@@ -273,25 +295,23 @@ async function processAnswer(player, spoken){
   setTimeout(()=>{ startRound(); }, 2000);
 }
 
-/* --------------------- Finalizar & Reiniciar --------------------- */
+/* --------------------- Finalizar rodada --------------------- */
 finishBtn.addEventListener('click', ()=>{
   gameEl.style.display = 'none';
   scoreboardEl.style.display = '';
   score1El.textContent = score1;
   score2El.textContent = score2;
+  if(score1 > score2) winnerEl.textContent = 'JOGADOR 1 VENCEU';
+  else if(score2 > score1) winnerEl.textContent = 'JOGADOR 2 VENCEU';
+  else winnerEl.textContent = 'EMPATE!';
 });
 
+/* --------------------- Reiniciar --------------------- */
 restartBtn.addEventListener('click', ()=>{
-  score1 = 0;
-  score2 = 0;
+  score1 = 0; score2 = 0;
   scoreboardEl.style.display = 'none';
   startScreen.style.display = '';
 });
-
-/* --------------------- Info inicial --------------------- */
-if(!isSpeechSupported()){
-  $('start-screen').querySelector('.muted').textContent += ' (Seu navegador pode não suportar reconhecimento de voz.)';
-}
 </script>
 </body>
 </html>
