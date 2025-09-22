@@ -1,73 +1,123 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Letras Rápidas</title>
-  <style>
-    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;--accent:#1d4ed8}
-    body{margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;background:#f3f4f6}
-    .card{width:96vw;max-width:480px;background:#fff;border-radius:12px;box-shadow:0 6px 24px rgba(2,6,23,0.08);padding:20px}
-    h1{margin:0 0 12px;font-size:20px}
-    #letters{font-size:56px;font-weight:700;letter-spacing:18px;text-align:center;margin:18px 0}
-    .center{text-align:center}
-    button{background:var(--accent);color:#fff;border:0;padding:12px 16px;border-radius:10px;font-weight:600;cursor:pointer}
-    .muted{color:#6b7280;font-size:14px}
-    .players{display:flex;gap:10px;justify-content:center;margin-top:12px}
-    .resp{flex:1;background:#111827}
-    #status{margin-top:8px;font-size:14px}
-    #transcript{margin-top:12px;font-weight:600}
-    #verdict{margin-top:8px;font-size:18px}
-    input[type="text"]{width:100%;padding:10px;border-radius:8px;border:1px solid #d1d5db}
-    #nextBtn{background:#f59e0b;margin-top:8px}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Letras Rápidas</title>
+<style>
+:root {
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+  --accent: #1d4ed8;
+}
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f3f4f6;
+}
+h1 { margin: 0 0 12px; font-size: 20px; text-align:center; }
+
+.card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(2,6,23,0.08);
+  padding: 12px;
+}
+
+#letters { font-size: 56px; font-weight:700; letter-spacing:18px; text-align:center; margin:18px 0; }
+
+.screen-split {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  margin-top:12px;
+  gap: 4px;
+}
+
+.half-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  background: #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+button {
+  background: var(--accent);
+  color:#fff;
+  border:0;
+  padding:12px 16px;
+  border-radius:10px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.middle-buttons {
+  display: flex;
+  justify-content: space-around;
+  margin:12px 0;
+}
+
+.muted { color:#6b7280; font-size:14px; text-align:center; }
+#transcript { margin-top:8px; font-weight:600; text-align:center; }
+#verdict { margin-top:8px; font-size:18px; text-align:center; }
+</style>
 </head>
 <body>
-  <div class="card">
-    <h1>Letras Rápidas</h1>
 
-    <!-- Tela inicial -->
-    <div id="start-screen" class="center">
-      <p class="muted">Clique em INICIAR. Após a contagem, duas letras serão exibidas. Quem souber uma palavra com as duas letras aperta RESPONDER e fala a palavra.</p>
-      <div style="height:18px"></div>
-      <button id="startBtn">INICIAR</button>
-    </div>
+<div class="card">
+  <h1>Letras Rápidas</h1>
 
-    <!-- Contagem regressiva -->
-    <div id="countdown" class="center" style="display:none;font-size:36px;margin-top:12px"></div>
-
-    <!-- Tela do jogo -->
-    <div id="game" style="display:none">
-      <div id="letters" aria-live="polite"></div>
-      <div id="status" class="center muted"></div>
-
-      <div class="players">
-        <button id="resp1" class="resp">RESPONDER — Jogador 1</button>
-        <button id="resp2" class="resp">RESPONDER — Jogador 2</button>
-      </div>
-
-      <div id="transcript" class="center"></div>
-      <div id="verdict" class="center"></div>
-
-      <div id="manual" style="display:none;margin-top:12px">
-        <input id="manualInput" placeholder="Digite a palavra (fallback)" />
-        <div style="height:8px"></div>
-        <button id="manualCheck">Verificar</button>
-      </div>
-
-      <button id="nextBtn">PRÓXIMA</button>
-      <button id="finishBtn" style="margin-top:16px;background:#d94664">FINALIZAR</button>
-    </div>
-
-    <!-- Tela do placar -->
-    <div id="scoreboard" style="display:none;text-align:center">
-      <h2>Placar Final</h2>
-      <p>Jogador 1: <span id="score1">0</span></p>
-      <p>Jogador 2: <span id="score2">0</span></p>
-      <p id="winner" style="font-size:20px;font-weight:700;margin-top:12px"></p>
-      <button id="restartBtn">REINICIAR</button>
-    </div>
+  <!-- Tela inicial -->
+  <div id="start-screen">
+    <p class="muted">Clique em INICIAR. Após a contagem, duas letras serão exibidas. Quem souber uma palavra com as duas letras aperta RESPONDER e fala a palavra.</p>
+    <div style="height:18px"></div>
+    <button id="startBtn">INICIAR</button>
   </div>
+
+  <!-- Contagem regressiva -->
+  <div id="countdown" style="display:none;font-size:36px;margin-top:12px;text-align:center"></div>
+
+  <!-- Tela do jogo -->
+  <div id="game" style="display:none;flex-direction:column;flex:1">
+    <div id="letters"></div>
+
+    <div class="screen-split">
+      <div class="half-screen">
+        <button id="resp1">RESPONDER — Jogador 1</button>
+      </div>
+      <div class="half-screen">
+        <button id="resp2">RESPONDER — Jogador 2</button>
+      </div>
+    </div>
+
+    <div class="middle-buttons">
+      <button id="nextBtn" style="background:#f59e0b">PRÓXIMA</button>
+      <button id="finishBtn" style="background:#d94664">FINALIZAR</button>
+    </div>
+
+    <div id="transcript"></div>
+    <div id="verdict"></div>
+  </div>
+
+  <!-- Tela do placar -->
+  <div id="scoreboard" style="display:none;text-align:center">
+    <h2>Placar Final</h2>
+    <p>Jogador 1: <span id="score1">0</span></p>
+    <p>Jogador 2: <span id="score2">0</span></p>
+    <p id="winner" style="font-size:20px;font-weight:700;margin-top:12px"></p>
+    <button id="restartBtn">REINICIAR</button>
+  </div>
+</div>
 
 <script>
 /* --------------------- Utils --------------------- */
@@ -78,247 +128,124 @@ function pickTwoLetters(){
   let a = letters[Math.floor(Math.random()*letters.length)];
   let b = letters[Math.floor(Math.random()*letters.length)];
   while(b===a) b = letters[Math.floor(Math.random()*letters.length)];
-  return [a, b];
+  return [a,b];
 }
-function removeDiacritics(str){ return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ß/g,'ss'); }
-function extractFirstWord(transcript){ const m = transcript.match(/[A-Za-zÀ-ÿ]+/); return m ? m[0] : ''; }
+function removeDiacritics(str){ return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss'); }
 
 /* --------------------- State --------------------- */
-let currentLetters = [];
-let answering = false; 
-let wordsSet = null; 
-let score1 = 0;
-let score2 = 0;
-let answerTimeout = null;
-
-/* --------------------- Load local wordlist (optional) --------------------- */
-async function loadLocalWordlist(){
-  try{
-    const res = await fetch('words_pt_BR.txt');
-    if(!res.ok) throw new Error('no local list');
-    const txt = await res.text();
-    wordsSet = new Set(txt.split(/\r?\n/).map(w=>removeDiacritics(w.trim().toLowerCase())).filter(Boolean));
-    console.log('Lista local carregada, palavras:', wordsSet.size);
-  }catch(e){ console.warn('Lista local não encontrada — fallback para consulta externa.'); }
-}
+let currentLetters=[],answering=false,score1=0,score2=0,wordsSet=null;
 
 /* --------------------- Web Speech API --------------------- */
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 function isSpeechSupported(){ return !!SpeechRecognition; }
 
-/* --------------------- Validation --------------------- */
-async function wordExistsOnline(word){
-  try{
-    const url = `https://pt.wiktionary.org/w/api.php?action=query&titles=${encodeURIComponent(word)}&format=json&origin=*`;
-    const r = await fetch(url);
-    if(!r.ok) return false;
-    const data = await r.json();
-    const pages = data.query && data.query.pages;
-    if(!pages) return false;
-    const page = Object.values(pages)[0];
-    return !page.hasOwnProperty('missing');
-  }catch(e){ console.warn('erro consulta wiktionary', e); return false; }
-}
-async function validateWord(wordRaw){
-  const word = removeDiacritics(wordRaw.trim().toLowerCase());
-  if(!word) return {exists:false, reason:'vazio'};
-  if(wordsSet){
-    const ok = wordsSet.has(word);
-    return {exists: ok, source: 'local', normalized: word};
-  }
-  const okOnline = await wordExistsOnline(word);
-  return {exists: okOnline, source: 'wiktionary', normalized: word};
-}
+/* --------------------- Elements --------------------- */
+const startBtn = $('startBtn'), countdownEl=$('countdown'), gameEl=$('game'), startScreen=$('start-screen');
+const lettersEl = $('letters'), resp1=$('resp1'), resp2=$('resp2');
+const transcriptEl=$('transcript'), verdictEl=$('verdict');
+const nextBtn=$('nextBtn'), finishBtn=$('finishBtn');
+const scoreboardEl=$('scoreboard'), score1El=$('score1'), score2El=$('score2'), winnerEl=$('winner'), restartBtn=$('restartBtn');
 
-/* --------------------- UI & Flow --------------------- */
-const startBtn = $('startBtn');
-const countdownEl = $('countdown');
-const gameEl = $('game');
-const startScreen = $('start-screen');
-const lettersEl = $('letters');
-const statusEl = $('status');
-const resp1 = $('resp1');
-const resp2 = $('resp2');
-const transcriptEl = $('transcript');
-const verdictEl = $('verdict');
-const manualBlock = $('manual');
-const manualInput = $('manualInput');
-const manualCheck = $('manualCheck');
-const finishBtn = $('finishBtn');
-const nextBtn = $('nextBtn');
-const scoreboardEl = $('scoreboard');
-const score1El = $('score1');
-const score2El = $('score2');
-const winnerEl = $('winner');
-const restartBtn = $('restartBtn');
-
-startBtn.addEventListener('click', async ()=>{
-  startScreen.style.display = 'none';
-  await loadLocalWordlist();
+/* --------------------- Start --------------------- */
+startBtn.addEventListener('click', async()=>{
+  startScreen.style.display='none';
   await runCountdownAndShowLetters();
 });
 
 async function runCountdownAndShowLetters(){
-  countdownEl.style.display = '';
-  gameEl.style.display = 'none';
-  countdownEl.textContent = '3';
-  await sleep(700);
-  countdownEl.textContent = '2';
-  await sleep(700);
-  countdownEl.textContent = '1';
-  await sleep(700);
-  countdownEl.textContent = 'JÁ!';
+  countdownEl.style.display='';
+  gameEl.style.display='none';
+  for(let i=3;i>0;i--){
+    countdownEl.textContent=i;
+    await sleep(700);
+  }
+  countdownEl.textContent='JÁ!';
   await sleep(500);
-  countdownEl.style.display = 'none';
-  gameEl.style.display = '';
+  countdownEl.style.display='none';
+  gameEl.style.display='flex';
   startRound();
 }
 
 function startRound(){
-  clearInterval(answerTimeout);
-  currentLetters = pickTwoLetters();
+  currentLetters=pickTwoLetters();
   lettersEl.textContent = `${currentLetters[0]}   ${currentLetters[1]}`;
-  transcriptEl.textContent = '';
-  verdictEl.textContent = '';
-  statusEl.textContent = isSpeechSupported() ? 'Pressione RESPONDER e fale a palavra (pt-BR).' : 'Reconhecimento de voz não disponível neste navegador. Use a entrada manual.';
-  manualBlock.style.display = isSpeechSupported() ? 'none' : '';
-  answering = false;
-  resp1.disabled = false;
-  resp2.disabled = false;
+  transcriptEl.textContent='';
+  verdictEl.textContent='';
+  answering=false;
+  resp1.disabled=false;
+  resp2.disabled=false;
 }
 
-/* --------------------- PRÓXIMA --------------------- */
+/* --------------------- Buttons --------------------- */
 nextBtn.addEventListener('click', startRound);
-
-/* --------------------- Jogador responde --------------------- */
-resp1.addEventListener('click', ()=>onResponderPress(1));
-resp2.addEventListener('click', ()=>onResponderPress(2));
-manualCheck.addEventListener('click', async ()=>{
-  const w = manualInput.value.trim();
-  if(!w) return alert('Digite uma palavra.');
-  await processAnswer(0, w); 
+finishBtn.addEventListener('click', ()=>{
+  gameEl.style.display='none';
+  scoreboardEl.style.display='';
+  score1El.textContent=score1;
+  score2El.textContent=score2;
+  if(score1>score2) winnerEl.textContent='JOGADOR 1 VENCEU';
+  else if(score2>score1) winnerEl.textContent='JOGADOR 2 VENCEU';
+  else winnerEl.textContent='EMPATE!';
+});
+restartBtn.addEventListener('click', ()=>{
+  score1=0; score2=0;
+  scoreboardEl.style.display='none';
+  startScreen.style.display='';
 });
 
+/* --------------------- Responder --------------------- */
+resp1.addEventListener('click', ()=>onResponderPress(1));
+resp2.addEventListener('click', ()=>onResponderPress(2));
+
 async function onResponderPress(player){
-  if(answering){
-    statusEl.textContent = `Já tem um jogador respondendo (Jogador ${answering}).`;
-    return;
-  }
-  answering = player;
-  resp1.disabled = true; resp2.disabled = true;
-  transcriptEl.textContent = `Jogador ${player}: prepare-se para falar...`;
+  if(answering){ transcriptEl.textContent=`Já tem jogador respondendo (Jogador ${answering}).`; return; }
+  answering=player;
+  resp1.disabled=true; resp2.disabled=true;
+  transcriptEl.textContent=`Jogador ${player}: fale agora!`;
 
-  if(!isSpeechSupported()){
-    transcriptEl.textContent = 'Reconhecimento de voz não suportado no navegador.';
-    return;
-  }
-
-  // Contagem de 3 segundos visível
-  let countdown = 3;
-  statusEl.textContent = `Você tem ${countdown} segundos para responder`;
-
-  answerTimeout = setInterval(()=>{
-    countdown--;
-    if(countdown > 0){
-      statusEl.textContent = `Você tem ${countdown} segundos para responder`;
-    } else {
-      clearInterval(answerTimeout);
-      verdictEl.innerHTML = `<span style="color:#d94664">Tempo esgotado! Rodada inválida.</span>`;
-      startRound();
-    }
-  }, 1000);
+  if(!isSpeechSupported()){ verdictEl.textContent='Reconhecimento de voz não suportado'; return; }
 
   try{
     await startRecognitionForPlayer(player);
-  }catch(err){
-    clearInterval(answerTimeout);
-    transcriptEl.textContent = 'Erro no reconhecimento: ' + (err.message||err);
-    answering = false;
-    resp1.disabled = false;
-    resp2.disabled = false;
-  }
+  }catch(e){ transcriptEl.textContent='Erro no reconhecimento: '+e; answering=false; resp1.disabled=false; resp2.disabled=false; }
 }
 
 function startRecognitionForPlayer(player){
-  return new Promise((resolve, reject)=>{
+  return new Promise((resolve,reject)=>{
     const rec = new SpeechRecognition();
-    rec.lang = 'pt-BR';
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
+    rec.lang='pt-BR';
+    rec.interimResults=false;
+    rec.maxAlternatives=1;
 
-    rec.onresult = async (ev)=>{
-      clearInterval(answerTimeout);
-      const transcript = ev.results[0][0].transcript.trim();
-      transcriptEl.textContent = `Jogador ${player} disse: "${transcript}"`;
+    rec.onresult=async(ev)=>{
+      const transcript=ev.results[0][0].transcript.trim();
+      transcriptEl.textContent=`Jogador ${player} disse: "${transcript}"`;
       await processAnswer(player, transcript);
       resolve();
     };
-    rec.onerror = (e)=>{
-      clearInterval(answerTimeout);
-      transcriptEl.textContent = `Erro no reconhecimento: ${e.error || e.message || 'unknown'}`;
-      answering = false;
-      resp1.disabled = false;
-      resp2.disabled = false;
-      reject(e);
-    };
-    rec.onend = ()=>{ clearInterval(answerTimeout); };
-    try{ rec.start(); }catch(e){ clearInterval(answerTimeout); reject(e); }
+    rec.onerror=(e)=>{ transcriptEl.textContent='Erro no reconhecimento: '+(e.error||e.message); answering=false; resp1.disabled=false; resp2.disabled=false; reject(e);}
+    try{ rec.start(); }catch(e){ reject(e); }
   });
 }
 
 async function processAnswer(player, spoken){
-  clearInterval(answerTimeout);
-  const rawWord = extractFirstWord(spoken) || spoken.split(/\s+/)[0] || spoken;
-  if(!rawWord){
-    verdictEl.textContent = 'Não entendi uma palavra válida.';
-    answering = false;
-    resp1.disabled = false;
-    resp2.disabled = false;
-    return;
-  }
-
+  const rawWord = spoken.split(/\s+/)[0];
+  if(!rawWord){ verdictEl.textContent='Não entendi uma palavra'; answering=false; resp1.disabled=false; resp2.disabled=false; return; }
   const normalized = removeDiacritics(rawWord.toLowerCase());
-  const l1 = currentLetters[0].toLowerCase();
-  const l2 = currentLetters[1].toLowerCase();
-  const contains = normalized.includes(l1) && normalized.includes(l2);
-  verdictEl.textContent = 'Validando palavra...';
-  const dict = await validateWord(rawWord);
+  const l1 = currentLetters[0].toLowerCase(), l2=currentLetters[1].toLowerCase();
+  const contains = normalized.includes(l1)&&normalized.includes(l2);
 
   if(!contains){
-    verdictEl.innerHTML = `<span style="color:#d94664">ERRO — a palavra "${rawWord}" não contém as duas letras (${currentLetters.join(', ')}).</span>`;
-  }else if(!dict.exists){
-    verdictEl.innerHTML = `<span style="color:#d94664">ERRO — a palavra "${rawWord}" não foi encontrada no dicionário (fonte: ${dict.source}).</span>`;
+    verdictEl.innerHTML=`<span style="color:#d94664">ERRO — "${rawWord}" não contém ${currentLetters.join(', ')}</span>`;
   }else{
-    verdictEl.innerHTML = `<span style="color:#059669">ACERTO — "${rawWord}" contém ${currentLetters.join(' e ')} e existe (fonte: ${dict.source}).</span>`;
-    if(player === 1) score1++;
-    if(player === 2) score2++;
+    verdictEl.innerHTML=`<span style="color:#059669">ACERTO — "${rawWord}" contém ${currentLetters.join(', ')}</span>`;
+    if(player===1) score1++; else score2++;
   }
-
-  setTimeout(()=>{ startRound(); }, 2000);
+  setTimeout(startRound,1500);
 }
 
-/* --------------------- Finalizar --------------------- */
-finishBtn.addEventListener('click', ()=>{
-  gameEl.style.display = 'none';
-  scoreboardEl.style.display = '';
-  score1El.textContent = score1;
-  score2El.textContent = score2;
-  if(score1 > score2) winnerEl.textContent = 'JOGADOR 1 VENCEU';
-  else if(score2 > score1) winnerEl.textContent = 'JOGADOR 2 VENCEU';
-  else winnerEl.textContent = 'EMPATE!';
-});
-
-/* --------------------- Reiniciar --------------------- */
-restartBtn.addEventListener('click', ()=>{
-  score1 = 0; score2 = 0;
-  scoreboardEl.style.display = 'none';
-  startScreen.style.display = '';
-});
-
-/* --------------------- Inicialização --------------------- */
-if(!isSpeechSupported()){
-  $('start-screen').querySelector('.muted').textContent += ' (Seu navegador pode não suportar reconhecimento de voz.)';
-}
+/* --------------------- Init --------------------- */
+if(!isSpeechSupported()){ startScreen.querySelector('.muted').textContent+=' (Seu navegador pode não suportar reconhecimento de voz.)'; }
 </script>
 </body>
 </html>
