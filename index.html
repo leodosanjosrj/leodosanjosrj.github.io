@@ -75,6 +75,7 @@ button {
     <div class="half-screen upper">
       <div id="letters2"></div>
       <button id="resp2">RESPONDER — Jogador 2</button>
+      <div id="message2"></div>
     </div>
 
     <div class="middle-buttons">
@@ -85,10 +86,8 @@ button {
     <div class="half-screen lower">
       <div id="letters1"></div>
       <button id="resp1">RESPONDER — Jogador 1</button>
+      <div id="message1"></div>
     </div>
-
-    <div id="transcript"></div>
-    <div id="verdict"></div>
   </div>
 
   <div id="scoreboard" style="display:none;">
@@ -103,7 +102,13 @@ button {
 <script>
 const $ = id => document.getElementById(id);
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
-function pickTwoLetters(){ const letters="ABCDEFGHILMNOPQRSTUVXZ"; let a=letters[Math.floor(Math.random()*letters.length)]; let b=letters[Math.floor(Math.random()*letters.length)]; while(b===a) b=letters[Math.floor(Math.random()*letters.length)]; return [a,b]; }
+function pickTwoLetters(){ 
+  const letters="ABCDEFGHILMNOPQRSTUVXZ"; 
+  let a=letters[Math.floor(Math.random()*letters.length)]; 
+  let b=letters[Math.floor(Math.random()*letters.length)]; 
+  while(b===a) b=letters[Math.floor(Math.random()*letters.length)]; 
+  return [a,b]; 
+}
 function removeDiacritics(str){ return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss'); }
 
 let currentLetters=[],answering=false,score1=0,score2=0;
@@ -113,7 +118,7 @@ function isSpeechSupported(){ return !!SpeechRecognition; }
 const startBtn=$('startBtn'), countdownEl=$('countdown'), gameEl=$('game'), startScreen=$('start-screen');
 const letters1=$('letters1'), letters2=$('letters2');
 const resp1=$('resp1'), resp2=$('resp2');
-const transcriptEl=$('transcript'), verdictEl=$('verdict');
+const message1=$('message1'), message2=$('message2');
 const nextBtn=$('nextBtn'), finishBtn=$('finishBtn');
 const scoreboardEl=$('scoreboard'), score1El=$('score1'), score2El=$('score2'), winnerEl=$('winner'), restartBtn=$('restartBtn');
 
@@ -136,7 +141,8 @@ function startRound(){
   currentLetters=pickTwoLetters();
   letters1.textContent=`${currentLetters[0]}   ${currentLetters[1]}`;
   letters2.textContent=`${currentLetters[0]}   ${currentLetters[1]}`;
-  transcriptEl.textContent=''; verdictEl.textContent='';
+  message1.textContent=''; 
+  message2.textContent='';
   answering=false; resp1.disabled=false; resp2.disabled=false;
 }
 
@@ -157,24 +163,24 @@ resp1.addEventListener('click', ()=>onResponderPress(1));
 resp2.addEventListener('click', ()=>onResponderPress(2));
 
 async function onResponderPress(player){
-  if(answering){ transcriptEl.textContent=`Já tem jogador respondendo (Jogador ${answering}).`; return;}
+  if(answering){ updateMessages(`Já tem jogador respondendo (Jogador ${answering}).`); return;}
   answering=player; resp1.disabled=true; resp2.disabled=true;
 
   let answered=false;
   const timeout = setTimeout(()=>{
     if(!answered){
-      verdictEl.textContent='Tempo esgotado! Rodada inválida.';
+      updateMessages('⏱ Tempo esgotado! Rodada inválida.');
       startRound();
     }
-  },3000);
+  },5000); // 5 segundos
 
-  transcriptEl.textContent=`Jogador ${player}: fale agora!`;
+  updateMessages(`🎤 Jogador ${player}: fale agora!`);
 
-  if(!isSpeechSupported()){ verdictEl.textContent='Reconhecimento de voz não suportado'; clearTimeout(timeout); return; }
+  if(!isSpeechSupported()){ updateMessages('Reconhecimento de voz não suportado'); clearTimeout(timeout); return; }
 
   try{
     await startRecognitionForPlayer(player, ()=>{ answered=true; clearTimeout(timeout); });
-  }catch(e){ transcriptEl.textContent='Erro: '+e; answering=false; resp1.disabled=false; resp2.disabled=false; clearTimeout(timeout);}
+  }catch(e){ updateMessages('Erro: '+e); answering=false; resp1.disabled=false; resp2.disabled=false; clearTimeout(timeout);}
 }
 
 function startRecognitionForPlayer(player, clearTimeoutCallback){
@@ -185,34 +191,36 @@ function startRecognitionForPlayer(player, clearTimeoutCallback){
     rec.onresult=async(ev)=>{
       clearTimeoutCallback();
       const transcript=ev.results[0][0].transcript.trim();
-      transcriptEl.textContent=`Jogador ${player} disse: "${transcript}"`;
+      updateMessages(`Jogador ${player} disse: "${transcript}"`);
       await processAnswer(player, transcript);
       resolve();
     };
-    rec.onerror=(e)=>{ clearTimeoutCallback(); transcriptEl.textContent='Erro no reconhecimento: '+(e.error||e.message); answering=false; resp1.disabled=false; resp2.disabled=false; reject(e);}
+    rec.onerror=(e)=>{ clearTimeoutCallback(); updateMessages('Erro no reconhecimento: '+(e.error||e.message)); answering=false; resp1.disabled=false; resp2.disabled=false; reject(e);}
     try{ rec.start(); }catch(e){ reject(e);}
   });
 }
 
 async function processAnswer(player, spoken){
   const rawWord = spoken.split(/\s+/)[0];
-  if(!rawWord){ verdictEl.textContent='Não entendi uma palavra'; answering=false; resp1.disabled=false; resp2.disabled=false; return; }
+  if(!rawWord){ updateMessages('Não entendi uma palavra'); answering=false; resp1.disabled=false; resp2.disabled=false; return; }
   const normalized = removeDiacritics(rawWord.toLowerCase());
   const l1=currentLetters[0].toLowerCase(), l2=currentLetters[1].toLowerCase();
   const contains=normalized.includes(l1)&&normalized.includes(l2);
 
   if(!contains){
-    verdictEl.innerHTML=`<span style="color:#d94664">ERRO — "${rawWord}" não contém ${currentLetters.join(', ')}</span>`;
+    updateMessages(`❌ ERRO — "${rawWord}" não contém ${currentLetters.join(', ')}`);
   }else{
-    verdictEl.innerHTML=`<span style="color:#059669">ACERTO — "${rawWord}" contém ${currentLetters.join(', ')}</span>`;
+    updateMessages(`✅ ACERTO — "${rawWord}" contém ${currentLetters.join(', ')}`);
     if(player===1) score1++; else score2++;
   }
 
-  // Mostrar resultado nas duas telas (upper/lower)
-  letters1.textContent=`${currentLetters[0]}   ${currentLetters[1]}`;
-  letters2.textContent=`${currentLetters[0]}   ${currentLetters[1]}`;
-
   setTimeout(startRound,1500);
+}
+
+// Atualiza mensagem para as duas telas
+function updateMessages(msg){
+  message1.textContent = msg;
+  message2.textContent = msg;
 }
 
 if(!isSpeechSupported()){ startScreen.querySelector('.muted').textContent+=' (Seu navegador pode não suportar reconhecimento de voz.)';}
