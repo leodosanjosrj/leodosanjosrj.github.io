@@ -10,47 +10,38 @@
   --accent: #1d4ed8;
 }
 body {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: #f3f4f6;
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#f3f4f6;
 }
-h1 { margin: 0 0 12px; font-size: 20px; text-align:center; }
-
 .card {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  max-width: 480px;
-  margin: auto;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 6px 24px rgba(2,6,23,0.08);
-  padding: 12px;
+  width:96vw;
+  max-width:480px;
+  background:#fff;
+  border-radius:12px;
+  box-shadow:0 6px 24px rgba(2,6,23,0.08);
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  min-height:80vh;
 }
-
-#letters { font-size: 56px; font-weight:700; letter-spacing:18px; text-align:center; margin:18px 0; }
-
-.screen-split {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  margin-top:12px;
-  gap: 4px;
-}
+h1 { text-align:center; font-size:20px; margin:0 0 12px; }
+#letters { font-size:56px; font-weight:700; letter-spacing:18px; text-align:center; margin:18px 0; }
 
 .half-screen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-  background: #e5e7eb;
-  border-radius: 8px;
-  padding: 8px;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  align-items:center;
+  background:#e5e7eb;
+  border-radius:8px;
+  padding:8px;
+  margin:4px 0;
 }
-
 button {
   background: var(--accent);
   color:#fff;
@@ -60,44 +51,33 @@ button {
   font-weight:600;
   cursor:pointer;
 }
-
 .middle-buttons {
-  display: flex;
-  justify-content: space-around;
-  margin:12px 0;
+  display:flex;
+  justify-content:space-around;
+  margin:8px 0;
 }
-
 .muted { color:#6b7280; font-size:14px; text-align:center; }
 #transcript { margin-top:8px; font-weight:600; text-align:center; }
 #verdict { margin-top:8px; font-size:18px; text-align:center; }
 </style>
 </head>
 <body>
-
 <div class="card">
   <h1>Letras Rápidas</h1>
 
-  <!-- Tela inicial -->
   <div id="start-screen">
     <p class="muted">Clique em INICIAR. Após a contagem, duas letras serão exibidas. Quem souber uma palavra com as duas letras aperta RESPONDER e fala a palavra.</p>
     <div style="height:18px"></div>
     <button id="startBtn">INICIAR</button>
   </div>
 
-  <!-- Contagem regressiva -->
   <div id="countdown" style="display:none;font-size:36px;margin-top:12px;text-align:center"></div>
 
-  <!-- Tela do jogo -->
-  <div id="game" style="display:none;flex-direction:column;flex:1">
+  <div id="game" style="display:none;flex:1;flex-direction:column;">
     <div id="letters"></div>
 
-    <div class="screen-split">
-      <div class="half-screen">
-        <button id="resp1">RESPONDER — Jogador 1</button>
-      </div>
-      <div class="half-screen">
-        <button id="resp2">RESPONDER — Jogador 2</button>
-      </div>
+    <div class="half-screen">
+      <button id="resp1">RESPONDER — Jogador 1</button>
     </div>
 
     <div class="middle-buttons">
@@ -105,11 +85,14 @@ button {
       <button id="finishBtn" style="background:#d94664">FINALIZAR</button>
     </div>
 
+    <div class="half-screen">
+      <button id="resp2">RESPONDER — Jogador 2</button>
+    </div>
+
     <div id="transcript"></div>
     <div id="verdict"></div>
   </div>
 
-  <!-- Tela do placar -->
   <div id="scoreboard" style="display:none;text-align:center">
     <h2>Placar Final</h2>
     <p>Jogador 1: <span id="score1">0</span></p>
@@ -120,33 +103,21 @@ button {
 </div>
 
 <script>
-/* --------------------- Utils --------------------- */
 const $ = id => document.getElementById(id);
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
-function pickTwoLetters(){
-  const letters = "ABCDEFGHILMNOPQRSTUVXZ"; // sem K, W e Y
-  let a = letters[Math.floor(Math.random()*letters.length)];
-  let b = letters[Math.floor(Math.random()*letters.length)];
-  while(b===a) b = letters[Math.floor(Math.random()*letters.length)];
-  return [a,b];
-}
+function pickTwoLetters(){ const letters="ABCDEFGHILMNOPQRSTUVXZ"; let a=letters[Math.floor(Math.random()*letters.length)]; let b=letters[Math.floor(Math.random()*letters.length)]; while(b===a) b=letters[Math.floor(Math.random()*letters.length)]; return [a,b]; }
 function removeDiacritics(str){ return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss'); }
 
-/* --------------------- State --------------------- */
-let currentLetters=[],answering=false,score1=0,score2=0,wordsSet=null;
-
-/* --------------------- Web Speech API --------------------- */
+let currentLetters=[],answering=false,score1=0,score2=0;
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 function isSpeechSupported(){ return !!SpeechRecognition; }
 
-/* --------------------- Elements --------------------- */
-const startBtn = $('startBtn'), countdownEl=$('countdown'), gameEl=$('game'), startScreen=$('start-screen');
-const lettersEl = $('letters'), resp1=$('resp1'), resp2=$('resp2');
+const startBtn=$('startBtn'), countdownEl=$('countdown'), gameEl=$('game'), startScreen=$('start-screen');
+const lettersEl=$('letters'), resp1=$('resp1'), resp2=$('resp2');
 const transcriptEl=$('transcript'), verdictEl=$('verdict');
 const nextBtn=$('nextBtn'), finishBtn=$('finishBtn');
 const scoreboardEl=$('scoreboard'), score1El=$('score1'), score2El=$('score2'), winnerEl=$('winner'), restartBtn=$('restartBtn');
 
-/* --------------------- Start --------------------- */
 startBtn.addEventListener('click', async()=>{
   startScreen.style.display='none';
   await runCountdownAndShowLetters();
@@ -155,12 +126,8 @@ startBtn.addEventListener('click', async()=>{
 async function runCountdownAndShowLetters(){
   countdownEl.style.display='';
   gameEl.style.display='none';
-  for(let i=3;i>0;i--){
-    countdownEl.textContent=i;
-    await sleep(700);
-  }
-  countdownEl.textContent='JÁ!';
-  await sleep(500);
+  for(let i=3;i>0;i--){ countdownEl.textContent=i; await sleep(700);}
+  countdownEl.textContent='JÁ!'; await sleep(500);
   countdownEl.style.display='none';
   gameEl.style.display='flex';
   startRound();
@@ -168,63 +135,46 @@ async function runCountdownAndShowLetters(){
 
 function startRound(){
   currentLetters=pickTwoLetters();
-  lettersEl.textContent = `${currentLetters[0]}   ${currentLetters[1]}`;
-  transcriptEl.textContent='';
-  verdictEl.textContent='';
-  answering=false;
-  resp1.disabled=false;
-  resp2.disabled=false;
+  lettersEl.textContent=`${currentLetters[0]}   ${currentLetters[1]}`;
+  transcriptEl.textContent=''; verdictEl.textContent='';
+  answering=false; resp1.disabled=false; resp2.disabled=false;
 }
 
-/* --------------------- Buttons --------------------- */
 nextBtn.addEventListener('click', startRound);
 finishBtn.addEventListener('click', ()=>{
-  gameEl.style.display='none';
-  scoreboardEl.style.display='';
-  score1El.textContent=score1;
-  score2El.textContent=score2;
+  gameEl.style.display='none'; scoreboardEl.style.display='';
+  score1El.textContent=score1; score2El.textContent=score2;
   if(score1>score2) winnerEl.textContent='JOGADOR 1 VENCEU';
   else if(score2>score1) winnerEl.textContent='JOGADOR 2 VENCEU';
   else winnerEl.textContent='EMPATE!';
 });
 restartBtn.addEventListener('click', ()=>{
   score1=0; score2=0;
-  scoreboardEl.style.display='none';
-  startScreen.style.display='';
+  scoreboardEl.style.display='none'; startScreen.style.display='';
 });
 
-/* --------------------- Responder --------------------- */
 resp1.addEventListener('click', ()=>onResponderPress(1));
 resp2.addEventListener('click', ()=>onResponderPress(2));
 
 async function onResponderPress(player){
-  if(answering){ transcriptEl.textContent=`Já tem jogador respondendo (Jogador ${answering}).`; return; }
-  answering=player;
-  resp1.disabled=true; resp2.disabled=true;
+  if(answering){ transcriptEl.textContent=`Já tem jogador respondendo (Jogador ${answering}).`; return;}
+  answering=player; resp1.disabled=true; resp2.disabled=true;
   transcriptEl.textContent=`Jogador ${player}: fale agora!`;
-
   if(!isSpeechSupported()){ verdictEl.textContent='Reconhecimento de voz não suportado'; return; }
-
-  try{
-    await startRecognitionForPlayer(player);
-  }catch(e){ transcriptEl.textContent='Erro no reconhecimento: '+e; answering=false; resp1.disabled=false; resp2.disabled=false; }
+  try{ await startRecognitionForPlayer(player); }catch(e){ transcriptEl.textContent='Erro no reconhecimento: '+e; answering=false; resp1.disabled=false; resp2.disabled=false;}
 }
 
 function startRecognitionForPlayer(player){
   return new Promise((resolve,reject)=>{
-    const rec = new SpeechRecognition();
-    rec.lang='pt-BR';
-    rec.interimResults=false;
-    rec.maxAlternatives=1;
-
-    rec.onresult=async(ev)=>{
+    const rec=new SpeechRecognition();
+    rec.lang='pt-BR'; rec.interimResults=false; rec.maxAlternatives=1;
+    rec.onresult=async(ev)=>{ 
       const transcript=ev.results[0][0].transcript.trim();
       transcriptEl.textContent=`Jogador ${player} disse: "${transcript}"`;
-      await processAnswer(player, transcript);
-      resolve();
+      await processAnswer(player, transcript); resolve();
     };
     rec.onerror=(e)=>{ transcriptEl.textContent='Erro no reconhecimento: '+(e.error||e.message); answering=false; resp1.disabled=false; resp2.disabled=false; reject(e);}
-    try{ rec.start(); }catch(e){ reject(e); }
+    try{ rec.start(); }catch(e){ reject(e);}
   });
 }
 
@@ -232,20 +182,16 @@ async function processAnswer(player, spoken){
   const rawWord = spoken.split(/\s+/)[0];
   if(!rawWord){ verdictEl.textContent='Não entendi uma palavra'; answering=false; resp1.disabled=false; resp2.disabled=false; return; }
   const normalized = removeDiacritics(rawWord.toLowerCase());
-  const l1 = currentLetters[0].toLowerCase(), l2=currentLetters[1].toLowerCase();
-  const contains = normalized.includes(l1)&&normalized.includes(l2);
+  const l1=currentLetters[0].toLowerCase(), l2=currentLetters[1].toLowerCase();
+  const contains=normalized.includes(l1)&&normalized.includes(l2);
 
-  if(!contains){
-    verdictEl.innerHTML=`<span style="color:#d94664">ERRO — "${rawWord}" não contém ${currentLetters.join(', ')}</span>`;
-  }else{
-    verdictEl.innerHTML=`<span style="color:#059669">ACERTO — "${rawWord}" contém ${currentLetters.join(', ')}</span>`;
-    if(player===1) score1++; else score2++;
-  }
+  if(!contains){ verdictEl.innerHTML=`<span style="color:#d94664">ERRO — "${rawWord}" não contém ${currentLetters.join(', ')}</span>`;}
+  else{ verdictEl.innerHTML=`<span style="color:#059669">ACERTO — "${rawWord}" contém ${currentLetters.join(', ')}</span>`;
+       if(player===1) score1++; else score2++; }
   setTimeout(startRound,1500);
 }
 
-/* --------------------- Init --------------------- */
-if(!isSpeechSupported()){ startScreen.querySelector('.muted').textContent+=' (Seu navegador pode não suportar reconhecimento de voz.)'; }
+if(!isSpeechSupported()){ startScreen.querySelector('.muted').textContent+=' (Seu navegador pode não suportar reconhecimento de voz.)';}
 </script>
 </body>
 </html>
