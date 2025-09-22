@@ -28,7 +28,6 @@ body {
   flex-direction:column;
   min-height:80vh;
 }
-h1 { text-align:center; font-size:20px; margin:0 0 12px; }
 .half-screen {
   flex:1;
   display:flex;
@@ -40,14 +39,15 @@ h1 { text-align:center; font-size:20px; margin:0 0 12px; }
 }
 .half-screen.upper { transform: rotate(180deg); background:#e5e7eb; }
 .half-screen.lower { background:#fef3c7; }
-#letters { font-size:56px; font-weight:700; letter-spacing:18px; text-align:center; margin:12px 0; }
+#letters1, #letters2 { font-size:56px; font-weight:700; letter-spacing:18px; text-align:center; margin:12px 0; }
 button {
   background: var(--accent);
   color:#fff;
   border:0;
-  padding:12px 16px;
+  padding:16px 20px;
   border-radius:10px;
   font-weight:600;
+  font-size:18px;
   cursor:pointer;
 }
 .middle-buttons {
@@ -56,14 +56,12 @@ button {
   margin:4px 0;
 }
 .muted { color:#6b7280; font-size:14px; text-align:center; padding:4px; }
-#transcript { margin-top:8px; font-weight:600; text-align:center; }
-#verdict { margin-top:8px; font-size:18px; text-align:center; }
+#transcript, #verdict { font-weight:600; text-align:center; margin:8px 0; font-size:16px; }
 #scoreboard { text-align:center; padding:12px; }
 </style>
 </head>
 <body>
 <div class="card">
-  <h1>Letras Rápidas</h1>
 
   <div id="start-screen">
     <p class="muted">Clique em INICIAR. Após a contagem, duas letras serão exibidas. Quem souber uma palavra com as duas letras aperta RESPONDER e fala a palavra.</p>
