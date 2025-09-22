@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Letras Rápidas</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;--accent:#1d4ed8}
+    body{margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;background:#f3f4f6}
+    .card{width:96vw;max-width:480px;background:#fff;border-radius:12px;box-shadow:0 6px 24px rgba(2,6,23,0.08);padding:20px}
+    h1{margin:0 0 12px;font-size:20px}
+    #letters{font-size:56px;font-weight:700;letter-spacing:18px;text-align:center;margin:18px 0}
+    .center{text-align:center}
+    button{background:var(--accent);color:#fff;border:0;padding:12px 16px;border-radius:10px;font-weight:600}
+    .muted{color:#6b7280;font-size:14px}
+    .players{display:flex;gap:10px;justify-content:center;margin-top:12px}
+    .resp{flex:1;background:#111827}
+    #status{margin-top:8px;font-size:14px}
+    #transcript{margin-top:12px;font-weight:600}
+    #verdict{margin-top:8px;font-size:18px}
+    input[type="text"]{width:100%;padding:10px;border-radius:8px;border:1px solid #d1d5db}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Letras Rápidas</h1>
+
+    <div id="start-screen" class="center">
+      <p class="muted">Clique em INICIAR. Após a contagem, duas letras serão exibidas. Quem souber uma palavra com as duas letras aperta RESPONDER e fala a palavra.</p>
+      <div style="height:18px"></div>
+      <button id="startBtn">INICIAR</button>
+    </div>
+
+    <div id="countdown" class="center" style="display:none;font-size:36px;margin-top:12px"></div>
+
+    <div id="game" style="display:none">
+      <div id="letters" aria-live="polite"></div>
+      <div id="status" class="center muted"></div>
+
+      <div class="players">
+        <button id="resp1" class="resp">RESPONDER — Jogador 1</button>
+        <button id="resp2" class="resp">RESPONDER — Jogador 2</button>
+      </div>
+
+      <div id="transcript" class="center"></div>
+      <div id="verdict" class="center"></div>
+
+      <div id="manual" style="display:none;margin-top:12px">
+        <input id="manualInput" placeholder="Digite a palavra (fallback)" />
+        <div style="height:8px"></div>
+        <button id="manualCheck">Verificar</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* --------------------- Utils --------------------- */
+const $ = id => document.getElementById(id);
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+function pickTwoLetters(){
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let a = letters[Math.floor(Math.random()*letters.length)];
+  let b = letters[Math.floor(Math.random()*letters.length)];
+  while(b===a) b = letters[Math.floor(Math.random()*letters.length)];
+  return [a, b];
+}
+
+function removeDiacritics(str){
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ß/g,'ss');
+}
+
+function extractFirstWord(transcript){
+  const m = transcript.match(/[A-Za-zÀ-ÿ]+/);
+  return m ? m[0] : '';
+}
+
+/* --------------------- State --------------------- */
+let currentLetters = [];
+let answering = false; // lock so only first responder is accepted
+let wordsSet = null; // local dictionary (if provided)
+
+/* --------------------- Load local wordlist (optional) --------------------- */
+async function loadLocalWordlist(){
+  try{
+    const res = await fetch('words_pt_BR.txt');
+    if(!res.ok) throw new Error('no local list');
+    const txt = await res.text();
+    wordsSet = new Set(txt.split(/\r?\n/).map(w=>removeDiacritics(w.trim().toLowerCase())).filter(Boolean));
+    console.log('Lista local carregada, palavras:', wordsSet.size);
+  }catch(e){
+    console.warn('Lista local não encontrada — fallback para consulta externa.');
+  }
+}
+
+/* --------------------- Web Speech API wrapper --------------------- */
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+
+function isSpeechSupported(){ return !!SpeechRecognition; }
+
+/* --------------------- Validation: local or remote (Wiktionary) --------------------- */
+async function wordExistsOnline(word){
+  // consulta pt.wiktionary.org via MediaWiki API (origin=* para CORS)
+  try{
+    const url = `https://pt.wiktionary.org/w/api.php?action=query&titles=${encodeURIComponent(word)}&format=json&origin=*`;
+    const r = await fetch(url);
+    if(!r.ok) return false;
+    const data = await r.json();
+    const pages = data.query && data.query.pages;
+    if(!pages) return false;
+    const page = Object.values(pages)[0];
+    return !page.hasOwnProperty('missing');
+  }catch(e){
+    console.warn('erro consulta wiktionary', e);
+    return false;
+  }
+}
+
+async function validateWord(wordRaw){
+  const word = removeDiacritics(wordRaw.trim().toLowerCase());
+  if(!word) return {exists:false, reason:'vazio'};
+
+  // 1) try local set
+  if(wordsSet){
+    const ok = wordsSet.has(word);
+    return {exists: ok, source: 'local', normalized: word};
+  }
+  // 2) fallback: wiktionary
+  const okOnline = await wordExistsOnline(word);
+  return {exists: okOnline, source: 'wiktionary', normalized: word};
+}
+
+/* --------------------- UI & Flow --------------------- */
+const startBtn = $('startBtn');
+const countdownEl = $('countdown');
+const gameEl = $('game');
+const startScreen = $('start-screen');
+const lettersEl = $('letters');
+const statusEl = $('status');
+const resp1 = $('resp1');
+const resp2 = $('resp2');
+const transcriptEl = $('transcript');
+const verdictEl = $('verdict');
+const manualBlock = $('manual');
+const manualInput = $('manualInput');
+const manualCheck = $('manualCheck');
+
+startBtn.addEventListener('click', async ()=>{
+  startScreen.style.display = 'none';
+  await loadLocalWordlist();
+  await runCountdownAndShowLetters();
+});
+
+async function runCountdownAndShowLetters(){
+  countdownEl.style.display = '';
+  gameEl.style.display = 'none';
+  countdownEl.textContent = '3';
+  await sleep(700);
+  countdownEl.textContent = '2';
+  await sleep(700);
+  countdownEl.textContent = '1';
+  await sleep(700);
+  countdownEl.textContent = 'JÁ!';
+  await sleep(500);
+  countdownEl.style.display = 'none';
+  gameEl.style.display = '';
+  startRound();
+}
+
+function startRound(){
+  currentLetters = pickTwoLetters();
+  lettersEl.textContent = `${currentLetters[0]}   ${currentLetters[1]}`;
+  transcriptEl.textContent = '';
+  verdictEl.textContent = '';
+  statusEl.textContent = isSpeechSupported() ? 'Pressione RESPONDER e fale a palavra (pt-BR).' : 'Reconhecimento de voz não disponível neste navegador. Use a entrada manual.';
+  manualBlock.style.display = isSpeechSupported() ? 'none' : '';
+  answering = false;
+  resp1.disabled = false;
+  resp2.disabled = false;
+}
+
+/* When a player presses RESPONDER */
+resp1.addEventListener('click', ()=>onResponderPress(1));
+resp2.addEventListener('click', ()=>onResponderPress(2));
+manualCheck.addEventListener('click', async ()=>{
+  const w = manualInput.value.trim();
+  if(!w) return alert('Digite uma palavra.');
+  await processAnswer(0, w); // 0 = manual
+});
+
+async function onResponderPress(player){
+  if(answering){
+    statusEl.textContent = `Já tem um jogador respondendo (Jogador ${answering}).`;
+    return;
+  }
+  answering = player;
+  resp1.disabled = true; resp2.disabled = true;
+  transcriptEl.textContent = `Jogador ${player}: aguardando fala...`;
+  if(!isSpeechSupported()){
+    transcriptEl.textContent = 'Reconhecimento de voz não suportado no navegador.';
+    return;
+  }
+  try{
+    await startRecognitionForPlayer(player);
+  }catch(err){
+    transcriptEl.textContent = 'Erro no reconhecimento: ' + (err.message||err);
+    answering = false;
+    resp1.disabled = false; resp2.disabled = false;
+  }
+}
+
+function startRecognitionForPlayer(player){
+  return new Promise((resolve, reject)=>{
+    const rec = new SpeechRecognition();
+    rec.lang = 'pt-BR';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    // timeout safety: stop after 6s
+    let timeout = setTimeout(()=>{ try{ rec.stop(); }catch(e){}; }, 6000);
+
+    rec.onresult = async (ev)=>{
+      clearTimeout(timeout);
+      const transcript = ev.results[0][0].transcript.trim();
+      transcriptEl.textContent = `Jogador ${player} disse: "${transcript}"`;
+      await processAnswer(player, transcript);
+      resolve();
+    };
+    rec.onerror = (e)=>{
+      clearTimeout(timeout);
+      transcriptEl.textContent = `Erro no reconhecimento: ${e.error || e.message || 'unknown'}`;
+      answering = false;
+      resp1.disabled = false; resp2.disabled = false;
+      reject(e);
+    };
+    rec.onend = ()=>{
+      clearTimeout(timeout);
+    };
+    try{
+      rec.start();
+    }catch(e){
+      clearTimeout(timeout);
+      reject(e);
+    }
+  });
+}
+
+/* Validate spelled word: contains both letters + exists in dictionary */
+async function processAnswer(player, spoken){
+  const rawWord = extractFirstWord(spoken) || spoken.split(/\s+/)[0] || spoken;
+  if(!rawWord){
+    verdictEl.textContent = 'Não entendi uma palavra válida.';
+    answering = false;
+    resp1.disabled = false; resp2.disabled = false;
+    return;
+  }
+
+  // check letters
+  const normalized = removeDiacritics(rawWord.toLowerCase());
+  const l1 = currentLetters[0].toLowerCase();
+  const l2 = currentLetters[1].toLowerCase();
+  const contains = normalized.includes(l1) && normalized.includes(l2);
+
+  // check dictionary
+  verdictEl.textContent = 'Validando palavra...';
+  const dict = await validateWord(rawWord);
+
+  if(!contains){
+    verdictEl.innerHTML = `<span style="color:#d94664">ERRO — a palavra "${rawWord}" não contém as duas letras (${currentLetters.join(', ')}).</span>`;
+  }else if(!dict.exists){
+    verdictEl.innerHTML = `<span style="color:#d94664">ERRO — a palavra "${rawWord}" não foi encontrada no dicionário (fonte: ${dict.source}).</span>`;
+  }else{
+    verdictEl.innerHTML = `<span style="color:#059669">ACERTO — "${rawWord}" contém ${currentLetters.join(' e ')} e existe (fonte: ${dict.source}).</span>`;
+  }
+
+  // liberar para próxima rodada após 2s
+  setTimeout(()=>{ startRound(); }, 2000);
+}
+
+/* --------------------- Start UI state --------------------- */
+if(!isSpeechSupported()){
+  // inform user
+  $('start-screen').querySelector('.muted').textContent += ' (Seu navegador pode não suportar reconhecimento de voz.)';
+}
+</script>
+</body>
+</html>
