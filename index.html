@@ -7,10 +7,7 @@
 <style>
 :root {
   font-family: system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-  --accent: #6366f1; /* roxo neutro e vibrante */
-  --neutral1: #f3f4f6;
-  --neutral2: #e5e7eb;
-  --highlight: #fde68a; /* amarelo alegre */
+  --accent: #1d4ed8;
 }
 body {
   margin:0;
@@ -18,21 +15,19 @@ body {
   display:flex;
   justify-content:center;
   align-items:center;
-  background:var(--neutral1);
+  background:#f3f4f6;
 }
 .card {
   width:96vw;
-  max-width:520px;
+  max-width:480px;
   background:#fff;
-  border-radius:16px;
-  box-shadow:0 8px 28px rgba(0,0,0,0.12);
+  border-radius:12px;
+  box-shadow:0 6px 24px rgba(2,6,23,0.08);
   padding:0;
   display:flex;
   flex-direction:column;
   min-height:80vh;
-  overflow:hidden;
 }
-
 /* Layout de metade da tela */
 .half-screen {
   flex:1;
@@ -40,21 +35,23 @@ body {
   flex-direction:column;
   justify-content:center;
   align-items:center;
-  padding:12px;
+  padding:8px;
   position:relative;
 }
-.half-screen.upper { transform: rotate(180deg); background:var(--neutral2); }
-.half-screen.lower { background:var(--highlight); }
-
-#letters1, #letters2 { 
-  font-size:56px; 
-  font-weight:700; 
-  letter-spacing:18px; 
-  text-align:center; 
-  margin:12px 0; 
-  color:#111827;
+.half-screen.upper {
+  transform: rotate(180deg);
+  background:#e5e7eb;
 }
-
+.half-screen.lower {
+  background:#fef3c7;
+}
+#letters1, #letters2 {
+  font-size:56px;
+  font-weight:700;
+  letter-spacing:18px;
+  text-align:center;
+  margin:12px 0;
+}
 button {
   background: var(--accent);
   color:#fff;
@@ -64,17 +61,24 @@ button {
   font-weight:600;
   font-size:18px;
   cursor:pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
 }
-button:hover { transform: scale(1.05); background:#4f46e5; }
 .middle-buttons {
   display:flex;
   justify-content:space-around;
-  margin:6px 0;
+  margin:4px 0;
 }
-.muted { color:#6b7280; font-size:14px; text-align:center; padding:4px; }
-#transcript, #verdict { font-weight:600; text-align:center; margin:8px 0; font-size:18px; }
-
+.muted {
+  color:#6b7280;
+  font-size:14px;
+  text-align:center;
+  padding:4px;
+}
+#transcript, #verdict {
+  font-weight:600;
+  text-align:center;
+  margin:8px 0;
+  font-size:18px;
+}
 /* Countdown e Scoreboard também divididos */
 #countdown, #scoreboard {
   flex:1;
@@ -89,33 +93,30 @@ button:hover { transform: scale(1.05); background:#4f46e5; }
   font-size:48px;
   font-weight:700;
 }
-.countdown-half.upper, .score-half.upper { transform: rotate(180deg); background:var(--neutral2); }
-.countdown-half.lower, .score-half.lower { background:var(--highlight); }
-
+.countdown-half.upper, .score-half.upper {
+  transform: rotate(180deg);
+  background:#e5e7eb;
+}
+.countdown-half.lower, .score-half.lower {
+  background:#fef3c7;
+}
 .score-content {
   text-align:center;
 }
-
 /* Ajustes apenas para Placar Final */
 #scoreboard h2 {
   font-size:22px; /* título menor */
   margin-bottom:6px;
-  color:#374151;
 }
-
 #scoreboard p {
   font-size:16px; /* pontuação menor */
   margin:2px 0;
 }
-
-#scoreboard #winnerA,
-#scoreboard #winnerB {
+#scoreboard #winnerA, #scoreboard #winnerB {
   font-size:18px;
   font-weight:700;
   margin-top:6px;
-  color:#111827;
 }
-
 #scoreboard button {
   font-size:16px;
   padding:12px 16px;
@@ -124,15 +125,13 @@ button:hover { transform: scale(1.05); background:#4f46e5; }
 </head>
 <body>
 <div class="card">
-
   <!-- Tela inicial -->
-  <div id="start-screen" style="text-align:center; padding:20px;">
-    <h1 style="margin:12px 0; font-size:32px; font-weight:800; color:#111827;">🎉 Bem-vindo ao Letronha 🎉</h1>
+  <div id="start-screen" style="text-align:center;">
+    <h1 style="margin:12px 0; font-size:28px; font-weight:700;">Letronha</h1>
     <p class="muted">
-      Clique em <b>INICIAR</b>. Após a contagem, duas letras serão exibidas.<br>
-      Quem souber uma palavra com as duas letras aperta <b>RESPONDER</b> e fala a palavra.
+      Clique em INICIAR. Após a contagem, duas letras serão exibidas. Quem souber uma palavra com as duas letras aperta RESPONDER e fala a palavra.
     </p>
-    <div style="height:16px"></div>
+    <div style="height:12px"></div>
     <div style="display:flex; justify-content:center;">
       <button id="startBtn">INICIAR</button>
     </div>
@@ -151,12 +150,10 @@ button:hover { transform: scale(1.05); background:#4f46e5; }
       <button id="resp2">RESPONDER — Jogador 2</button>
       <div id="message2"></div>
     </div>
-
     <div class="middle-buttons">
       <button id="nextBtn" style="background:#f59e0b">PRÓXIMA</button>
       <button id="finishBtn" style="background:#d94664">FINALIZAR</button>
     </div>
-
     <div class="half-screen lower">
       <div id="letters1"></div>
       <button id="resp1">RESPONDER — Jogador 1</button>
@@ -190,18 +187,18 @@ button:hover { transform: scale(1.05); background:#4f46e5; }
 <script>
 const $ = id => document.getElementById(id);
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
-function pickTwoLetters(){ 
-  const letters="ABCDEFGHILMNOPQRSTUVXZ"; 
-  let a=letters[Math.floor(Math.random()*letters.length)]; 
-  let b=letters[Math.floor(Math.random()*letters.length)]; 
-  while(b===a) b=letters[Math.floor(Math.random()*letters.length)]; 
-  return [a,b]; 
+function pickTwoLetters(){
+  const letters="ABCDEFGHILMNOPQRSTUVXZ";
+  let a=letters[Math.floor(Math.random()*letters.length)];
+  let b=letters[Math.floor(Math.random()*letters.length)];
+  while(b===a) b=letters[Math.floor(Math.random()*letters.length)];
+  return [a,b];
 }
-function removeDiacritics(str){ return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss'); }
-
+function removeDiacritics(str){
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss');
+}
 let currentLetters=[],answering=false,score1=0,score2=0;
 let palavrasUsadas = []; // Lista de palavras já usadas
-
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 function isSpeechSupported(){ return !!SpeechRecognition; }
 
@@ -236,29 +233,41 @@ async function runCountdownAndShowLetters(){
   gameEl.style.display='flex';
   startRound();
 }
-
 function startRound(){
   currentLetters=pickTwoLetters();
-  letters1.textContent=`${currentLetters[0]}   ${currentLetters[1]}`;
-  letters2.textContent=`${currentLetters[0]}   ${currentLetters[1]}`;
-  message1.textContent=''; 
+  letters1.textContent=`${currentLetters[0]} ${currentLetters[1]}`;
+  letters2.textContent=`${currentLetters[0]} ${currentLetters[1]}`;
+  message1.textContent='';
   message2.textContent='';
-  answering=false; resp1.disabled=false; resp2.disabled=false;
+  answering=false;
+  resp1.disabled=false;
+  resp2.disabled=false;
 }
-
 nextBtn.addEventListener('click', startRound);
 finishBtn.addEventListener('click', ()=>{
-  gameEl.style.display='none'; scoreboardEl.style.display='flex';
-  score1a.textContent=score1; score2a.textContent=score2;
-  score1b.textContent=score1; score2b.textContent=score2;
-  if(score1>score2){ winnerA.textContent='JOGADOR 1 VENCEU'; winnerB.textContent='JOGADOR 1 VENCEU'; }
-  else if(score2>score1){ winnerA.textContent='JOGADOR 2 VENCEU'; winnerB.textContent='JOGADOR 2 VENCEU'; }
-  else { winnerA.textContent='EMPATE!'; winnerB.textContent='EMPATE!'; }
+  gameEl.style.display='none';
+  scoreboardEl.style.display='flex';
+  score1a.textContent=score1;
+  score2a.textContent=score2;
+  score1b.textContent=score1;
+  score2b.textContent=score2;
+  if(score1>score2){
+    winnerA.textContent='JOGADOR 1 VENCEU';
+    winnerB.textContent='JOGADOR 1 VENCEU';
+  } else if(score2>score1){
+    winnerA.textContent='JOGADOR 2 VENCEU';
+    winnerB.textContent='JOGADOR 2 VENCEU';
+  } else {
+    winnerA.textContent='EMPATE!';
+    winnerB.textContent='EMPATE!';
+  }
 });
 function restartGame(){
-  score1=0; score2=0;
+  score1=0;
+  score2=0;
   palavrasUsadas = []; // limpa histórico
-  scoreboardEl.style.display='none'; startScreen.style.display='';
+  scoreboardEl.style.display='none';
+  startScreen.style.display='';
 }
 restartBtnA.addEventListener('click', restartGame);
 restartBtnB.addEventListener('click', restartGame);
@@ -267,9 +276,13 @@ resp1.addEventListener('click', ()=>onResponderPress(1));
 resp2.addEventListener('click', ()=>onResponderPress(2));
 
 async function onResponderPress(player){
-  if(answering){ updateMessages(`Já tem jogador respondendo (Jogador ${answering}).`); return;}
-  answering=player; resp1.disabled=true; resp2.disabled=true;
-
+  if(answering){
+    updateMessages(`Já tem jogador respondendo (Jogador ${answering}).`);
+    return;
+  }
+  answering=player;
+  resp1.disabled=true;
+  resp2.disabled=true;
   let answered=false;
   const timeout = setTimeout(()=>{
     if(!answered){
@@ -277,21 +290,31 @@ async function onResponderPress(player){
       startRound();
     }
   },4000); // 4 segundos
-
   updateMessages(`🎤 Jogador ${player}: fale agora!`);
-
-  if(!isSpeechSupported()){ updateMessages('Reconhecimento de voz não suportado'); clearTimeout(timeout); return; }
-
+  if(!isSpeechSupported()){
+    updateMessages('Reconhecimento de voz não suportado');
+    clearTimeout(timeout);
+    return;
+  }
   try{
-    await startRecognitionForPlayer(player, ()=>{ answered=true; clearTimeout(timeout); });
-  }catch(e){ updateMessages('Erro: '+e); answering=false; resp1.disabled=false; resp2.disabled=false; clearTimeout(timeout);}
+    await startRecognitionForPlayer(player, ()=>{
+      answered=true;
+      clearTimeout(timeout);
+    });
+  }catch(e){
+    updateMessages('Erro: '+e);
+    answering=false;
+    resp1.disabled=false;
+    resp2.disabled=false;
+    clearTimeout(timeout);
+  }
 }
-
 function startRecognitionForPlayer(player, clearTimeoutCallback){
   return new Promise((resolve,reject)=>{
     const rec=new SpeechRecognition();
-    rec.lang='pt-BR'; rec.interimResults=false; rec.maxAlternatives=1;
-
+    rec.lang='pt-BR';
+    rec.interimResults=false;
+    rec.maxAlternatives=1;
     rec.onresult=async(ev)=>{
       clearTimeoutCallback();
       const transcript=ev.results[0][0].transcript.trim();
@@ -299,31 +322,35 @@ function startRecognitionForPlayer(player, clearTimeoutCallback){
       await processAnswer(player, transcript);
       resolve();
     };
-    rec.onerror=(e)=>{ clearTimeoutCallback(); updateMessages('Erro no reconhecimento: '+(e.error||e.message)); answering=false; resp1.disabled=false; resp2.disabled=false; reject(e);}
-    try{ rec.start(); }catch(e){ reject(e);}
+    rec.onerror=(e)=>{
+      clearTimeoutCallback();
+      updateMessages('Erro no reconhecimento: '+(e.error||e.message));
+      answering=false;
+      resp1.disabled=false;
+      resp2.disabled=false;
+      reject(e);
+    }
+    try{ rec.start(); }catch(e){ reject(e); }
   });
 }
-
 async function processAnswer(player, spoken){
   const rawWord = spoken.split(/\s+/)[0];
-  if(!rawWord){ 
-    updateMessages('Não entendi uma palavra'); 
-    answering=false; resp1.disabled=false; resp2.disabled=false; 
-    return; 
+  if(!rawWord){
+    updateMessages('Não entendi uma palavra');
+    answering=false;
+    resp1.disabled=false;
+    resp2.disabled=false;
+    return;
   }
-
   const normalized = removeDiacritics(rawWord.toLowerCase());
-
   // Verifica se a palavra já foi usada
   if(palavrasUsadas.includes(normalized)){
     updateMessages(`⚠️ Palavra repetida — "${rawWord}"`);
     setTimeout(startRound,1500); // sorteia novas letras
     return;
   }
-
   const l1=currentLetters[0].toLowerCase(), l2=currentLetters[1].toLowerCase();
   const contains=normalized.includes(l1)&&normalized.includes(l2);
-
   if(!contains){
     updateMessages(`❌ ERRO — "${rawWord}" não contém ${currentLetters.join(', ')}`);
   }else{
@@ -331,17 +358,16 @@ async function processAnswer(player, spoken){
     palavrasUsadas.push(normalized); // registra palavra como usada
     if(player===1) score1++; else score2++;
   }
-
   setTimeout(startRound,1500);
 }
-
 // Atualiza mensagens para as duas telas
 function updateMessages(msg){
   message1.textContent = msg;
   message2.textContent = msg;
 }
-
-if(!isSpeechSupported()){ startScreen.querySelector('.muted').textContent+=' (Seu navegador pode não suportar reconhecimento de voz.)';}
+if(!isSpeechSupported()){
+  startScreen.querySelector('.muted').textContent+=' (Seu navegador pode não suportar reconhecimento de voz.)';
+}
 </script>
 </body>
 </html>
