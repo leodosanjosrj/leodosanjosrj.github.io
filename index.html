@@ -1,405 +1,373 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Letronha</title>
-<style>
-:root {
-  font-family: system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-  --accent: #1d4ed8;
-}
-body {
-  margin:0;
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:#f3f4f6;
-}
-.card {
-  width:96vw;
-  max-width:960px;
-  background:#fff;
-  border-radius:12px;
-  box-shadow:0 6px 24px rgba(2,6,23,0.08);
-  padding:0;
-  display:flex;
-  flex-direction:column;
-  min-height:80vh;
-}
-
-/* Layout de metade da tela */
-.half-screen {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  padding:8px;
-  position:relative;
-}
-.half-container {
-  flex:1;
-  display:flex;
-  flex-direction:row;
-}
-
-/* Esquerda e direita (substitui upper/lower) */
-.half-screen.left {
-  background:#e5e7eb;
-}
-.half-screen.right {
-  background:#fef3c7;
-}
-
-/* Rotação do texto para efeito leste/oeste */
-.half-screen.left > * {
-  transform: rotate(90deg);
-}
-.half-screen.right > * {
-  transform: rotate(-90deg);
-}
-
-#letters1, #letters2 {
-  font-size:56px;
-  font-weight:700;
-  letter-spacing:18px;
-  text-align:center;
-  margin:12px 0;
-}
-
-button {
-  background: var(--accent);
-  color:#fff;
-  border:0;
-  padding:16px 20px;
-  border-radius:10px;
-  font-weight:600;
-  font-size:18px;
-  cursor:pointer;
-}
-
-.middle-buttons {
-  display:flex;
-  justify-content:space-around;
-  margin:4px 0;
-}
-
-.muted {
-  color:#6b7280;
-  font-size:14px;
-  text-align:center;
-  padding:4px;
-}
-
-#transcript, #verdict {
-  font-weight:600;
-  text-align:center;
-  margin:8px 0;
-  font-size:18px;
-}
-
-/* Countdown e Scoreboard divididos verticalmente */
-#countdown, #scoreboard {
-  flex:1;
-  display:flex;
-  flex-direction:row;
-}
-
-.countdown-half, .score-half {
-  flex:1;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-size:48px;
-  font-weight:700;
-}
-
-.countdown-half.left, .score-half.left {
-  background:#e5e7eb;
-}
-.countdown-half.right, .score-half.right {
-  background:#fef3c7;
-}
-
-.score-content {
-  text-align:center;
-}
-
-/* Ajustes apenas para Placar Final */
-#scoreboard h2 {
-  font-size:22px; /* título menor */
-  margin-bottom:6px;
-}
-#scoreboard p {
-  font-size:16px; /* pontuação menor */
-  margin:2px 0;
-}
-#scoreboard #winnerA, #scoreboard #winnerB {
-  font-size:18px;
-  font-weight:700;
-  margin-top:6px;
-}
-#scoreboard button {
-  font-size:16px;
-  padding:12px 16px;
-}
-</style>
-</head>
-<body>
-<div class="card">
-  <!-- Tela inicial -->
-  <div id="start-screen" style="text-align:center;">
-    <h1 style="margin:12px 0; font-size:28px; font-weight:700;">Letronha</h1>
-    <p class="muted">
-      Clique em INICIAR. Após a contagem, duas letras serão exibidas. Quem souber uma palavra com as duas letras aperta RESPONDER e fala a palavra.
-    </p>
-    <div style="height:12px"></div>
-    <div style="display:flex; justify-content:center;">
-      <button id="startBtn">INICIAR</button>
-    </div>
-  </div>
-
-  <!-- Contagem regressiva -->
-  <div id="countdown" style="display:none;">
-    <div class="countdown-half left" id="count2"></div>
-    <div class="countdown-half right" id="count1"></div>
-  </div>
-
-  <!-- Jogo -->
-  <div id="game" style="display:none;flex:1;flex-direction:column;">
-    <div class="half-container">
-      <div class="half-screen left">
-        <div id="letters2"></div>
-        <button id="resp2">RESPONDER — Jogador 2</button>
-        <div id="message2"></div>
-      </div>
-      <div class="half-screen right">
-        <div id="letters1"></div>
-        <button id="resp1">RESPONDER — Jogador 1</button>
-        <div id="message1"></div>
-      </div>
-    </div>
-    <div class="middle-buttons">
-      <button id="nextBtn" style="background:#f59e0b">PRÓXIMA</button>
-      <button id="finishBtn" style="background:#d94664">FINALIZAR</button>
-    </div>
-  </div>
-
-  <!-- Placar Final -->
-  <div id="scoreboard" style="display:none;">
-    <div class="score-half left">
-      <div class="score-content">
-        <h2>Placar Final</h2>
-        <p>Jogador 1: <span id="score1a">0</span></p>
-        <p>Jogador 2: <span id="score2a">0</span></p>
-        <p id="winnerA"></p>
-        <button id="restartBtnA">REINICIAR</button>
-      </div>
-    </div>
-    <div class="score-half right">
-      <div class="score-content">
-        <h2>Placar Final</h2>
-        <p>Jogador 1: <span id="score1b">0</span></p>
-        <p>Jogador 2: <span id="score2b">0</span></p>
-        <p id="winnerB"></p>
-        <button id="restartBtnB">REINICIAR</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-const $ = id => document.getElementById(id);
-function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
-function pickTwoLetters(){
-  const letters="ABCDEFGHILMNOPQRSTUVXZ";
-  let a=letters[Math.floor(Math.random()*letters.length)];
-  let b=letters[Math.floor(Math.random()*letters.length)];
-  while(b===a) b=letters[Math.floor(Math.random()*letters.length)];
-  return [a,b];
-}
-function removeDiacritics(str){
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss');
-}
-let currentLetters=[],answering=false,score1=0,score2=0;
-let palavrasUsadas = []; 
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
-function isSpeechSupported(){ return !!SpeechRecognition; }
-
-const startBtn=$('startBtn'), countdownEl=$('countdown'), gameEl=$('game'), startScreen=$('start-screen');
-const letters1=$('letters1'), letters2=$('letters2');
-const resp1=$('resp1'), resp2=$('resp2');
-const message1=$('message1'), message2=$('message2');
-const nextBtn=$('nextBtn'), finishBtn=$('finishBtn');
-const scoreboardEl=$('scoreboard');
-const score1a=$('score1a'), score2a=$('score2a'), winnerA=$('winnerA');
-const score1b=$('score1b'), score2b=$('score2b'), winnerB=$('winnerB');
-const restartBtnA=$('restartBtnA'), restartBtnB=$('restartBtnB');
-const count1=$('count1'), count2=$('count2');
-
-startBtn.addEventListener('click', async()=>{
-  startScreen.style.display='none';
-  await runCountdownAndShowLetters();
-});
-
-async function runCountdownAndShowLetters(){
-  countdownEl.style.display='';
-  gameEl.style.display='none';
-  for(let i=3;i>0;i--){
-    count1.textContent=i;
-    count2.textContent=i;
-    await sleep(700);
-  }
-  count1.textContent='JÁ!';
-  count2.textContent='JÁ!';
-  await sleep(500);
-  countdownEl.style.display='none';
-  gameEl.style.display='flex';
-  startRound();
-}
-
-function startRound(){
-  currentLetters=pickTwoLetters();
-  letters1.textContent=`${currentLetters[0]} ${currentLetters[1]}`;
-  letters2.textContent=`${currentLetters[0]} ${currentLetters[1]}`;
-  message1.textContent='';
-  message2.textContent='';
-  answering=false;
-  resp1.disabled=false;
-  resp2.disabled=false;
-}
-
-nextBtn.addEventListener('click', startRound);
-finishBtn.addEventListener('click', ()=>{
-  gameEl.style.display='none';
-  scoreboardEl.style.display='flex';
-  score1a.textContent=score1;
-  score2a.textContent=score2;
-  score1b.textContent=score1;
-  score2b.textContent=score2;
-  if(score1>score2){
-    winnerA.textContent='JOGADOR 1 VENCEU';
-    winnerB.textContent='JOGADOR 1 VENCEU';
-  } else if(score2>score1){
-    winnerA.textContent='JOGADOR 2 VENCEU';
-    winnerB.textContent='JOGADOR 2 VENCEU';
-  } else {
-    winnerA.textContent='EMPATE!';
-    winnerB.textContent='EMPATE!';
-  }
-});
-
-function restartGame(){
-  score1=0;
-  score2=0;
-  palavrasUsadas = []; 
-  scoreboardEl.style.display='none';
-  startScreen.style.display='';
-}
-
-restartBtnA.addEventListener('click', restartGame);
-restartBtnB.addEventListener('click', restartGame);
-
-resp1.addEventListener('click', ()=>onResponderPress(1));
-resp2.addEventListener('click', ()=>onResponderPress(2));
-
-async function onResponderPress(player){
-  if(answering){
-    updateMessages(`Já tem jogador respondendo (Jogador ${answering}).`);
-    return;
-  }
-  answering=player;
-  resp1.disabled=true;
-  resp2.disabled=true;
-  let answered=false;
-  const timeout = setTimeout(()=>{
-    if(!answered){
-      updateMessages('⏱ Tempo esgotado! Rodada inválida.');
-      startRound();
-    }
-  },4000); 
-  updateMessages(`🎤 Jogador ${player}: fale agora!`);
-  if(!isSpeechSupported()){
-    updateMessages('Reconhecimento de voz não suportado');
-    clearTimeout(timeout);
-    return;
-  }
-  try{
-    await startRecognitionForPlayer(player, ()=>{
-      answered=true;
-      clearTimeout(timeout);
-    });
-  }catch(e){
-    updateMessages('Erro: '+e);
-    answering=false;
-    resp1.disabled=false;
-    resp2.disabled=false;
-    clearTimeout(timeout);
-  }
-}
-
-function startRecognitionForPlayer(player, clearTimeoutCallback){
-  return new Promise((resolve,reject)=>{
-    const rec=new SpeechRecognition();
-    rec.lang='pt-BR';
-    rec.interimResults=false;
-    rec.maxAlternatives=1;
-    rec.onresult=async(ev)=>{
-      clearTimeoutCallback();
-      const transcript=ev.results[0][0].transcript.trim();
-      updateMessages(`Jogador ${player} disse: "${transcript}"`);
-      await processAnswer(player, transcript);
-      resolve();
-    };
-    rec.onerror=(e)=>{
-      clearTimeoutCallback();
-      updateMessages('Erro no reconhecimento: '+(e.error||e.message));
-      answering=false;
-      resp1.disabled=false;
-      resp2.disabled=false;
-      reject(e);
-    }
-    try{ rec.start(); }catch(e){ reject(e); }
-  });
-}
-
-async function processAnswer(player, spoken){
-  const rawWord = spoken.split(/\s+/)[0];
-  if(!rawWord){
-    updateMessages('Não entendi uma palavra');
-    answering=false;
-    resp1.disabled=false;
-    resp2.disabled=false;
-    return;
-  }
-  const normalized = removeDiacritics(rawWord.toLowerCase());
-  if(palavrasUsadas.includes(normalized)){
-    updateMessages(`⚠️ Palavra repetida — "${rawWord}"`);
-    setTimeout(startRound,1500);
-    return;
-  }
-  const l1=currentLetters[0].toLowerCase(), l2=currentLetters[1].toLowerCase();
-  const contains=normalized.includes(l1)&&normalized.includes(l2);
-  if(!contains){
-    updateMessages(`❌ ERRO — "${rawWord}" não contém ${currentLetters.join(', ')}`);
-  }else{
-    updateMessages(`✅ ACERTO — "${rawWord}" contém ${currentLetters.join(', ')}`);
-    palavrasUsadas.push(normalized); 
-    if(player===1) score1++; else score2++;
-  }
-  setTimeout(startRound,1500);
-}
-
-function updateMessages(msg){
-  message1.textContent = msg;
-  message2.textContent = msg;
-}
-
-if(!isSpeechSupported()){
-  startScreen.querySelector('.muted').textContent+=' (Seu navegador pode não suportar reconhecimento de voz.)';
-}
-</script>
-</body>
+<!doctype html>  
+<html lang="pt-BR">  
+<head>  
+<meta charset="utf-8" />  
+<meta name="viewport" content="width=device-width,initial-scale=1" />  
+<title>Letronha</title>  
+<style>  
+:root {  
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;  
+  --accent: #1d4ed8;  
+}  
+body {  
+  margin:0;  
+  min-height:100vh;  
+  display:flex;  
+  justify-content:center;  
+  align-items:center;  
+  background:#f3f4f6;  
+}  
+.card {  
+  width:96vw;  
+  max-width:480px;  
+  background:#fff;  
+  border-radius:12px;  
+  box-shadow:0 6px 24px rgba(2,6,23,0.08);  
+  padding:0;  
+  display:flex;  
+  flex-direction:column;  
+  min-height:80vh;  
+}  
+/* Layout de metade da tela */  
+.half-screen {  
+  flex:1;  
+  display:flex;  
+  flex-direction:column;  
+  justify-content:center;  
+  align-items:center;  
+  padding:8px;  
+  position:relative;  
+}  
+.half-screen.upper {  
+  transform: rotate(180deg);  
+  background:#e5e7eb;  
+}  
+.half-screen.lower {  
+  background:#fef3c7;  
+}  
+#letters1, #letters2 {  
+  font-size:56px;  
+  font-weight:700;  
+  letter-spacing:18px;  
+  text-align:center;  
+  margin:12px 0;  
+}  
+button {  
+  background: var(--accent);  
+  color:#fff;  
+  border:0;  
+  padding:16px 20px;  
+  border-radius:10px;  
+  font-weight:600;  
+  font-size:18px;  
+  cursor:pointer;  
+}  
+.middle-buttons {  
+  display:flex;  
+  justify-content:space-around;  
+  margin:4px 0;  
+}  
+.muted {  
+  color:#6b7280;  
+  font-size:14px;  
+  text-align:center;  
+  padding:4px;  
+}  
+#transcript, #verdict {  
+  font-weight:600;  
+  text-align:center;  
+  margin:8px 0;  
+  font-size:18px;  
+}  
+/* Countdown e Scoreboard também divididos */  
+#countdown, #scoreboard {  
+  flex:1;  
+  display:flex;  
+  flex-direction:column;  
+}  
+.countdown-half, .score-half {  
+  flex:1;  
+  display:flex;  
+  justify-content:center;  
+  align-items:center;  
+  font-size:48px;  
+  font-weight:700;  
+}  
+.countdown-half.upper, .score-half.upper {  
+  transform: rotate(180deg);  
+  background:#e5e7eb;  
+}  
+.countdown-half.lower, .score-half.lower {  
+  background:#fef3c7;  
+}  
+.score-content {  
+  text-align:center;  
+}  
+/* Ajustes apenas para Placar Final */  
+#scoreboard h2 {  
+  font-size:22px; /* título menor */  
+  margin-bottom:6px;  
+}  
+#scoreboard p {  
+  font-size:16px; /* pontuação menor */  
+  margin:2px 0;  
+}  
+#scoreboard #winnerA, #scoreboard #winnerB {  
+  font-size:18px;  
+  font-weight:700;  
+  margin-top:6px;  
+}  
+#scoreboard button {  
+  font-size:16px;  
+  padding:12px 16px;  
+}  
+</style>  
+</head>  
+<body>  
+<div class="card">  
+  <!-- Tela inicial -->  
+  <div id="start-screen" style="text-align:center;">  
+    <h1 style="margin:12px 0; font-size:28px; font-weight:700;">Letronha</h1>  
+    <p class="muted">  
+      Clique em INICIAR. Após a contagem, duas letras serão exibidas. Quem souber uma palavra com as duas letras aperta RESPONDER e fala a palavra.  
+    </p>  
+    <div style="height:12px"></div>  
+    <div style="display:flex; justify-content:center;">  
+      <button id="startBtn">INICIAR</button>  
+    </div>  
+  </div>  
+  
+  <!-- Contagem regressiva em 2 metades -->  
+  <div id="countdown" style="display:none;">  
+    <div class="countdown-half upper" id="count2"></div>  
+    <div class="countdown-half lower" id="count1"></div>  
+  </div>  
+  
+  <!-- Jogo -->  
+  <div id="game" style="display:none;flex:1;flex-direction:column;">  
+    <div class="half-screen upper">  
+      <div id="letters2"></div>  
+      <button id="resp2">RESPONDER — Jogador 2</button>  
+      <div id="message2"></div>  
+    </div>  
+    <div class="middle-buttons">  
+      <button id="nextBtn" style="background:#f59e0b">PRÓXIMA</button>  
+      <button id="finishBtn" style="background:#d94664">FINALIZAR</button>  
+    </div>  
+    <div class="half-screen lower">  
+      <div id="letters1"></div>  
+      <button id="resp1">RESPONDER — Jogador 1</button>  
+      <div id="message1"></div>  
+    </div>  
+  </div>  
+  
+  <!-- Placar Final em 2 metades -->  
+  <div id="scoreboard" style="display:none;">  
+    <div class="score-half upper">  
+      <div class="score-content">  
+        <h2>Placar Final</h2>  
+        <p>Jogador 1: <span id="score1a">0</span></p>  
+        <p>Jogador 2: <span id="score2a">0</span></p>  
+        <p id="winnerA"></p>  
+        <button id="restartBtnA">REINICIAR</button>  
+      </div>  
+    </div>  
+    <div class="score-half lower">  
+      <div class="score-content">  
+        <h2>Placar Final</h2>  
+        <p>Jogador 1: <span id="score1b">0</span></p>  
+        <p>Jogador 2: <span id="score2b">0</span></p>  
+        <p id="winnerB"></p>  
+        <button id="restartBtnB">REINICIAR</button>  
+      </div>  
+    </div>  
+  </div>  
+</div>  
+  
+<script>  
+const $ = id => document.getElementById(id);  
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }  
+function pickTwoLetters(){  
+  const letters="ABCDEFGHILMNOPQRSTUVXZ";  
+  let a=letters[Math.floor(Math.random()*letters.length)];  
+  let b=letters[Math.floor(Math.random()*letters.length)];  
+  while(b===a) b=letters[Math.floor(Math.random()*letters.length)];  
+  return [a,b];  
+}  
+function removeDiacritics(str){  
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss');  
+}  
+let currentLetters=[],answering=false,score1=0,score2=0;  
+let palavrasUsadas = []; // Lista de palavras já usadas  
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;  
+function isSpeechSupported(){ return !!SpeechRecognition; }  
+  
+const startBtn=$('startBtn'), countdownEl=$('countdown'), gameEl=$('game'), startScreen=$('start-screen');  
+const letters1=$('letters1'), letters2=$('letters2');  
+const resp1=$('resp1'), resp2=$('resp2');  
+const message1=$('message1'), message2=$('message2');  
+const nextBtn=$('nextBtn'), finishBtn=$('finishBtn');  
+const scoreboardEl=$('scoreboard');  
+const score1a=$('score1a'), score2a=$('score2a'), winnerA=$('winnerA');  
+const score1b=$('score1b'), score2b=$('score2b'), winnerB=$('winnerB');  
+const restartBtnA=$('restartBtnA'), restartBtnB=$('restartBtnB');  
+const count1=$('count1'), count2=$('count2');  
+  
+startBtn.addEventListener('click', async()=>{  
+  startScreen.style.display='none';  
+  await runCountdownAndShowLetters();  
+});  
+  
+async function runCountdownAndShowLetters(){  
+  countdownEl.style.display='';  
+  gameEl.style.display='none';  
+  for(let i=3;i>0;i--){  
+    count1.textContent=i;  
+    count2.textContent=i;  
+    await sleep(700);  
+  }  
+  count1.textContent='JÁ!';  
+  count2.textContent='JÁ!';  
+  await sleep(500);  
+  countdownEl.style.display='none';  
+  gameEl.style.display='flex';  
+  startRound();  
+}  
+function startRound(){  
+  currentLetters=pickTwoLetters();  
+  letters1.textContent=`${currentLetters[0]} ${currentLetters[1]}`;  
+  letters2.textContent=`${currentLetters[0]} ${currentLetters[1]}`;  
+  message1.textContent='';  
+  message2.textContent='';  
+  answering=false;  
+  resp1.disabled=false;  
+  resp2.disabled=false;  
+}  
+nextBtn.addEventListener('click', startRound);  
+finishBtn.addEventListener('click', ()=>{  
+  gameEl.style.display='none';  
+  scoreboardEl.style.display='flex';  
+  score1a.textContent=score1;  
+  score2a.textContent=score2;  
+  score1b.textContent=score1;  
+  score2b.textContent=score2;  
+  if(score1>score2){  
+    winnerA.textContent='JOGADOR 1 VENCEU';  
+    winnerB.textContent='JOGADOR 1 VENCEU';  
+  } else if(score2>score1){  
+    winnerA.textContent='JOGADOR 2 VENCEU';  
+    winnerB.textContent='JOGADOR 2 VENCEU';  
+  } else {  
+    winnerA.textContent='EMPATE!';  
+    winnerB.textContent='EMPATE!';  
+  }  
+});  
+function restartGame(){  
+  score1=0;  
+  score2=0;  
+  palavrasUsadas = []; // limpa histórico  
+  scoreboardEl.style.display='none';  
+  startScreen.style.display='';  
+}  
+restartBtnA.addEventListener('click', restartGame);  
+restartBtnB.addEventListener('click', restartGame);  
+  
+resp1.addEventListener('click', ()=>onResponderPress(1));  
+resp2.addEventListener('click', ()=>onResponderPress(2));  
+  
+async function onResponderPress(player){  
+  if(answering){  
+    updateMessages(`Já tem jogador respondendo (Jogador ${answering}).`);  
+    return;  
+  }  
+  answering=player;  
+  resp1.disabled=true;  
+  resp2.disabled=true;  
+  let answered=false;  
+  const timeout = setTimeout(()=>{  
+    if(!answered){  
+      updateMessages('⏱ Tempo esgotado! Rodada inválida.');  
+      startRound();  
+    }  
+  },4000); // 4 segundos  
+  updateMessages(`🎤 Jogador ${player}: fale agora!`);  
+  if(!isSpeechSupported()){  
+    updateMessages('Reconhecimento de voz não suportado');  
+    clearTimeout(timeout);  
+    return;  
+  }  
+  try{  
+    await startRecognitionForPlayer(player, ()=>{  
+      answered=true;  
+      clearTimeout(timeout);  
+    });  
+  }catch(e){  
+    updateMessages('Erro: '+e);  
+    answering=false;  
+    resp1.disabled=false;  
+    resp2.disabled=false;  
+    clearTimeout(timeout);  
+  }  
+}  
+function startRecognitionForPlayer(player, clearTimeoutCallback){  
+  return new Promise((resolve,reject)=>{  
+    const rec=new SpeechRecognition();  
+    rec.lang='pt-BR';  
+    rec.interimResults=false;  
+    rec.maxAlternatives=1;  
+    rec.onresult=async(ev)=>{  
+      clearTimeoutCallback();  
+      const transcript=ev.results[0][0].transcript.trim();  
+      updateMessages(`Jogador ${player} disse: "${transcript}"`);  
+      await processAnswer(player, transcript);  
+      resolve();  
+    };  
+    rec.onerror=(e)=>{  
+      clearTimeoutCallback();  
+      updateMessages('Erro no reconhecimento: '+(e.error||e.message));  
+      answering=false;  
+      resp1.disabled=false;  
+      resp2.disabled=false;  
+      reject(e);  
+    }  
+    try{ rec.start(); }catch(e){ reject(e); }  
+  });  
+}  
+async function processAnswer(player, spoken){  
+  const rawWord = spoken.split(/\s+/)[0];  
+  if(!rawWord){  
+    updateMessages('Não entendi uma palavra');  
+    answering=false;  
+    resp1.disabled=false;  
+    resp2.disabled=false;  
+    return;  
+  }  
+  const normalized = removeDiacritics(rawWord.toLowerCase());  
+  // Verifica se a palavra já foi usada  
+  if(palavrasUsadas.includes(normalized)){  
+    updateMessages(`⚠️ Palavra repetida — "${rawWord}"`);  
+    setTimeout(startRound,1500); // sorteia novas letras  
+    return;  
+  }  
+  const l1=currentLetters[0].toLowerCase(), l2=currentLetters[1].toLowerCase();  
+  const contains=normalized.includes(l1)&&normalized.includes(l2);  
+  if(!contains){  
+    updateMessages(`❌ ERRO — "${rawWord}" não contém ${currentLetters.join(', ')}`);  
+  }else{  
+    updateMessages(`✅ ACERTO — "${rawWord}" contém ${currentLetters.join(', ')}`);  
+    palavrasUsadas.push(normalized); // registra palavra como usada  
+    if(player===1) score1++; else score2++;  
+  }  
+  setTimeout(startRound,1500);  
+}  
+// Atualiza mensagens para as duas telas  
+function updateMessages(msg){  
+  message1.textContent = msg;  
+  message2.textContent = msg;  
+}  
+if(!isSpeechSupported()){  
+  startScreen.querySelector('.muted').textContent+=' (Seu navegador pode não suportar reconhecimento de voz.)';  
+}  
+</script>  
+</body>  
 </html>
