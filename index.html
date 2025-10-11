@@ -29,7 +29,7 @@ body {
   min-height:80vh;
 }
 
-/* Layout de metade da tela - agora vertical */
+/* Layout de metade da tela */
 .half-screen {
   flex:1;
   display:flex;
@@ -51,6 +51,14 @@ body {
 }
 .half-screen.right {
   background:#fef3c7;
+}
+
+/* Rotação do texto para efeito leste/oeste */
+.half-screen.left > * {
+  transform: rotate(90deg);
+}
+.half-screen.right > * {
+  transform: rotate(-90deg);
 }
 
 #letters1, #letters2 {
@@ -92,7 +100,7 @@ button {
   font-size:18px;
 }
 
-/* Countdown e Scoreboard agora divididos verticalmente */
+/* Countdown e Scoreboard divididos verticalmente */
 #countdown, #scoreboard {
   flex:1;
   display:flex;
@@ -111,7 +119,6 @@ button {
 .countdown-half.left, .score-half.left {
   background:#e5e7eb;
 }
-
 .countdown-half.right, .score-half.right {
   background:#fef3c7;
 }
@@ -154,7 +161,7 @@ button {
     </div>
   </div>
 
-  <!-- Contagem regressiva agora dividida verticalmente -->
+  <!-- Contagem regressiva -->
   <div id="countdown" style="display:none;">
     <div class="countdown-half left" id="count2"></div>
     <div class="countdown-half right" id="count1"></div>
@@ -180,7 +187,7 @@ button {
     </div>
   </div>
 
-  <!-- Placar Final agora dividido verticalmente -->
+  <!-- Placar Final -->
   <div id="scoreboard" style="display:none;">
     <div class="score-half left">
       <div class="score-content">
@@ -217,7 +224,7 @@ function removeDiacritics(str){
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss');
 }
 let currentLetters=[],answering=false,score1=0,score2=0;
-let palavrasUsadas = []; // Lista de palavras já usadas
+let palavrasUsadas = []; 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 function isSpeechSupported(){ return !!SpeechRecognition; }
 
@@ -252,6 +259,7 @@ async function runCountdownAndShowLetters(){
   gameEl.style.display='flex';
   startRound();
 }
+
 function startRound(){
   currentLetters=pickTwoLetters();
   letters1.textContent=`${currentLetters[0]} ${currentLetters[1]}`;
@@ -262,6 +270,7 @@ function startRound(){
   resp1.disabled=false;
   resp2.disabled=false;
 }
+
 nextBtn.addEventListener('click', startRound);
 finishBtn.addEventListener('click', ()=>{
   gameEl.style.display='none';
@@ -281,13 +290,15 @@ finishBtn.addEventListener('click', ()=>{
     winnerB.textContent='EMPATE!';
   }
 });
+
 function restartGame(){
   score1=0;
   score2=0;
-  palavrasUsadas = []; // limpa histórico
+  palavrasUsadas = []; 
   scoreboardEl.style.display='none';
   startScreen.style.display='';
 }
+
 restartBtnA.addEventListener('click', restartGame);
 restartBtnB.addEventListener('click', restartGame);
 
@@ -308,7 +319,7 @@ async function onResponderPress(player){
       updateMessages('⏱ Tempo esgotado! Rodada inválida.');
       startRound();
     }
-  },4000); // 4 segundos
+  },4000); 
   updateMessages(`🎤 Jogador ${player}: fale agora!`);
   if(!isSpeechSupported()){
     updateMessages('Reconhecimento de voz não suportado');
@@ -328,6 +339,7 @@ async function onResponderPress(player){
     clearTimeout(timeout);
   }
 }
+
 function startRecognitionForPlayer(player, clearTimeoutCallback){
   return new Promise((resolve,reject)=>{
     const rec=new SpeechRecognition();
@@ -352,6 +364,7 @@ function startRecognitionForPlayer(player, clearTimeoutCallback){
     try{ rec.start(); }catch(e){ reject(e); }
   });
 }
+
 async function processAnswer(player, spoken){
   const rawWord = spoken.split(/\s+/)[0];
   if(!rawWord){
@@ -362,10 +375,9 @@ async function processAnswer(player, spoken){
     return;
   }
   const normalized = removeDiacritics(rawWord.toLowerCase());
-  // Verifica se a palavra já foi usada
   if(palavrasUsadas.includes(normalized)){
     updateMessages(`⚠️ Palavra repetida — "${rawWord}"`);
-    setTimeout(startRound,1500); // sorteia novas letras
+    setTimeout(startRound,1500);
     return;
   }
   const l1=currentLetters[0].toLowerCase(), l2=currentLetters[1].toLowerCase();
@@ -374,16 +386,17 @@ async function processAnswer(player, spoken){
     updateMessages(`❌ ERRO — "${rawWord}" não contém ${currentLetters.join(', ')}`);
   }else{
     updateMessages(`✅ ACERTO — "${rawWord}" contém ${currentLetters.join(', ')}`);
-    palavrasUsadas.push(normalized); // registra palavra como usada
+    palavrasUsadas.push(normalized); 
     if(player===1) score1++; else score2++;
   }
   setTimeout(startRound,1500);
 }
-// Atualiza mensagens para as duas telas
+
 function updateMessages(msg){
   message1.textContent = msg;
   message2.textContent = msg;
 }
+
 if(!isSpeechSupported()){
   startScreen.querySelector('.muted').textContent+=' (Seu navegador pode não suportar reconhecimento de voz.)';
 }
