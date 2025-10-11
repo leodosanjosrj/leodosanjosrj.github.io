@@ -19,7 +19,7 @@ body {
 }
 .card {
   width:96vw;
-  max-width:480px;
+  max-width:960px;
   background:#fff;
   border-radius:12px;
   box-shadow:0 6px 24px rgba(2,6,23,0.08);
@@ -28,7 +28,8 @@ body {
   flex-direction:column;
   min-height:80vh;
 }
-/* Layout de metade da tela */
+
+/* Layout de metade da tela - agora vertical */
 .half-screen {
   flex:1;
   display:flex;
@@ -38,13 +39,20 @@ body {
   padding:8px;
   position:relative;
 }
-.half-screen.upper {
-  transform: rotate(180deg);
+.half-container {
+  flex:1;
+  display:flex;
+  flex-direction:row;
+}
+
+/* Esquerda e direita (substitui upper/lower) */
+.half-screen.left {
   background:#e5e7eb;
 }
-.half-screen.lower {
+.half-screen.right {
   background:#fef3c7;
 }
+
 #letters1, #letters2 {
   font-size:56px;
   font-weight:700;
@@ -52,6 +60,7 @@ body {
   text-align:center;
   margin:12px 0;
 }
+
 button {
   background: var(--accent);
   color:#fff;
@@ -62,29 +71,34 @@ button {
   font-size:18px;
   cursor:pointer;
 }
+
 .middle-buttons {
   display:flex;
   justify-content:space-around;
   margin:4px 0;
 }
+
 .muted {
   color:#6b7280;
   font-size:14px;
   text-align:center;
   padding:4px;
 }
+
 #transcript, #verdict {
   font-weight:600;
   text-align:center;
   margin:8px 0;
   font-size:18px;
 }
-/* Countdown e Scoreboard também divididos */
+
+/* Countdown e Scoreboard agora divididos verticalmente */
 #countdown, #scoreboard {
   flex:1;
   display:flex;
-  flex-direction:column;
+  flex-direction:row;
 }
+
 .countdown-half, .score-half {
   flex:1;
   display:flex;
@@ -93,16 +107,19 @@ button {
   font-size:48px;
   font-weight:700;
 }
-.countdown-half.upper, .score-half.upper {
-  transform: rotate(180deg);
+
+.countdown-half.left, .score-half.left {
   background:#e5e7eb;
 }
-.countdown-half.lower, .score-half.lower {
+
+.countdown-half.right, .score-half.right {
   background:#fef3c7;
 }
+
 .score-content {
   text-align:center;
 }
+
 /* Ajustes apenas para Placar Final */
 #scoreboard h2 {
   font-size:22px; /* título menor */
@@ -137,33 +154,35 @@ button {
     </div>
   </div>
 
-  <!-- Contagem regressiva em 2 metades -->
+  <!-- Contagem regressiva agora dividida verticalmente -->
   <div id="countdown" style="display:none;">
-    <div class="countdown-half upper" id="count2"></div>
-    <div class="countdown-half lower" id="count1"></div>
+    <div class="countdown-half left" id="count2"></div>
+    <div class="countdown-half right" id="count1"></div>
   </div>
 
   <!-- Jogo -->
   <div id="game" style="display:none;flex:1;flex-direction:column;">
-    <div class="half-screen upper">
-      <div id="letters2"></div>
-      <button id="resp2">RESPONDER — Jogador 2</button>
-      <div id="message2"></div>
+    <div class="half-container">
+      <div class="half-screen left">
+        <div id="letters2"></div>
+        <button id="resp2">RESPONDER — Jogador 2</button>
+        <div id="message2"></div>
+      </div>
+      <div class="half-screen right">
+        <div id="letters1"></div>
+        <button id="resp1">RESPONDER — Jogador 1</button>
+        <div id="message1"></div>
+      </div>
     </div>
     <div class="middle-buttons">
       <button id="nextBtn" style="background:#f59e0b">PRÓXIMA</button>
       <button id="finishBtn" style="background:#d94664">FINALIZAR</button>
     </div>
-    <div class="half-screen lower">
-      <div id="letters1"></div>
-      <button id="resp1">RESPONDER — Jogador 1</button>
-      <div id="message1"></div>
-    </div>
   </div>
 
-  <!-- Placar Final em 2 metades -->
+  <!-- Placar Final agora dividido verticalmente -->
   <div id="scoreboard" style="display:none;">
-    <div class="score-half upper">
+    <div class="score-half left">
       <div class="score-content">
         <h2>Placar Final</h2>
         <p>Jogador 1: <span id="score1a">0</span></p>
@@ -172,7 +191,7 @@ button {
         <button id="restartBtnA">REINICIAR</button>
       </div>
     </div>
-    <div class="score-half lower">
+    <div class="score-half right">
       <div class="score-content">
         <h2>Placar Final</h2>
         <p>Jogador 1: <span id="score1b">0</span></p>
