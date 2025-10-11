@@ -29,7 +29,7 @@ body {
   min-height:80vh;
 }
 
-/* Layout de metade da tela - agora vertical */
+/* Layout de metade da tela - vertical */
 .half-screen {
   flex:1;
   display:flex;
@@ -48,9 +48,16 @@ body {
 /* Esquerda e direita (substitui upper/lower) */
 .half-screen.left {
   background:#e5e7eb;
+  transform: rotateY(0deg);
 }
 .half-screen.right {
   background:#fef3c7;
+  transform: rotateY(180deg); /* espelhamento Leste/Oeste */
+}
+
+/* Corrige a direção dos conteúdos internos do lado direito */
+.half-screen.right > * {
+  transform: rotateY(180deg);
 }
 
 #letters1, #letters2 {
@@ -108,12 +115,22 @@ button {
   font-weight:700;
 }
 
+/* Metade esquerda normal */
 .countdown-half.left, .score-half.left {
   background:#e5e7eb;
+  transform: rotateY(0deg);
 }
 
+/* Metade direita espelhada no eixo Y */
 .countdown-half.right, .score-half.right {
   background:#fef3c7;
+  transform: rotateY(180deg);
+}
+
+/* Corrige o conteúdo interno do lado direito */
+.countdown-half.right > *, 
+.score-half.right > * {
+  transform: rotateY(180deg);
 }
 
 .score-content {
