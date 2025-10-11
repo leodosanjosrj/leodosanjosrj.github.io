@@ -29,7 +29,7 @@ body {
   min-height:80vh;
 }
 
-/* Layout de metade da tela - vertical */
+/* Layout de metade da tela - agora vertical */
 .half-screen {
   flex:1;
   display:flex;
@@ -48,16 +48,11 @@ body {
 /* Esquerda e direita (substitui upper/lower) */
 .half-screen.left {
   background:#e5e7eb;
-  transform: rotateY(0deg);
+  transform: rotateY(180deg); /* Fonte virada para Leste */
 }
 .half-screen.right {
   background:#fef3c7;
-  transform: rotateY(180deg); /* espelhamento Leste/Oeste */
-}
-
-/* Corrige a direção dos conteúdos internos do lado direito */
-.half-screen.right > * {
-  transform: rotateY(180deg);
+  transform: rotateY(0deg); /* Fonte virada para Oeste */
 }
 
 #letters1, #letters2 {
@@ -115,22 +110,14 @@ button {
   font-weight:700;
 }
 
-/* Metade esquerda normal */
 .countdown-half.left, .score-half.left {
   background:#e5e7eb;
-  transform: rotateY(0deg);
+  transform: rotateY(180deg); /* texto Leste */
 }
 
-/* Metade direita espelhada no eixo Y */
 .countdown-half.right, .score-half.right {
   background:#fef3c7;
-  transform: rotateY(180deg);
-}
-
-/* Corrige o conteúdo interno do lado direito */
-.countdown-half.right > *, 
-.score-half.right > * {
-  transform: rotateY(180deg);
+  transform: rotateY(0deg); /* texto Oeste */
 }
 
 .score-content {
@@ -234,7 +221,7 @@ function removeDiacritics(str){
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss');
 }
 let currentLetters=[],answering=false,score1=0,score2=0;
-let palavrasUsadas = []; // Lista de palavras já usadas
+let palavrasUsadas = [];
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 function isSpeechSupported(){ return !!SpeechRecognition; }
 
@@ -301,7 +288,7 @@ finishBtn.addEventListener('click', ()=>{
 function restartGame(){
   score1=0;
   score2=0;
-  palavrasUsadas = []; // limpa histórico
+  palavrasUsadas = [];
   scoreboardEl.style.display='none';
   startScreen.style.display='';
 }
@@ -325,7 +312,7 @@ async function onResponderPress(player){
       updateMessages('⏱ Tempo esgotado! Rodada inválida.');
       startRound();
     }
-  },4000); // 4 segundos
+  },4000);
   updateMessages(`🎤 Jogador ${player}: fale agora!`);
   if(!isSpeechSupported()){
     updateMessages('Reconhecimento de voz não suportado');
@@ -379,10 +366,9 @@ async function processAnswer(player, spoken){
     return;
   }
   const normalized = removeDiacritics(rawWord.toLowerCase());
-  // Verifica se a palavra já foi usada
   if(palavrasUsadas.includes(normalized)){
     updateMessages(`⚠️ Palavra repetida — "${rawWord}"`);
-    setTimeout(startRound,1500); // sorteia novas letras
+    setTimeout(startRound,1500);
     return;
   }
   const l1=currentLetters[0].toLowerCase(), l2=currentLetters[1].toLowerCase();
@@ -391,12 +377,11 @@ async function processAnswer(player, spoken){
     updateMessages(`❌ ERRO — "${rawWord}" não contém ${currentLetters.join(', ')}`);
   }else{
     updateMessages(`✅ ACERTO — "${rawWord}" contém ${currentLetters.join(', ')}`);
-    palavrasUsadas.push(normalized); // registra palavra como usada
+    palavrasUsadas.push(normalized);
     if(player===1) score1++; else score2++;
   }
   setTimeout(startRound,1500);
 }
-// Atualiza mensagens para as duas telas
 function updateMessages(msg){
   message1.textContent = msg;
   message2.textContent = msg;
