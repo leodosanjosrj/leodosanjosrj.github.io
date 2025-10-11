@@ -48,11 +48,9 @@ body {
 /* Esquerda e direita (substitui upper/lower) */
 .half-screen.left {
   background:#e5e7eb;
-  transform: rotateY(180deg); /* Fonte virada para Leste */
 }
 .half-screen.right {
   background:#fef3c7;
-  transform: rotateY(0deg); /* Fonte virada para Oeste */
 }
 
 #letters1, #letters2 {
@@ -112,12 +110,10 @@ button {
 
 .countdown-half.left, .score-half.left {
   background:#e5e7eb;
-  transform: rotateY(180deg); /* texto Leste */
 }
 
 .countdown-half.right, .score-half.right {
   background:#fef3c7;
-  transform: rotateY(0deg); /* texto Oeste */
 }
 
 .score-content {
@@ -221,7 +217,7 @@ function removeDiacritics(str){
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss');
 }
 let currentLetters=[],answering=false,score1=0,score2=0;
-let palavrasUsadas = [];
+let palavrasUsadas = []; // Lista de palavras já usadas
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 function isSpeechSupported(){ return !!SpeechRecognition; }
 
@@ -288,7 +284,7 @@ finishBtn.addEventListener('click', ()=>{
 function restartGame(){
   score1=0;
   score2=0;
-  palavrasUsadas = [];
+  palavrasUsadas = []; // limpa histórico
   scoreboardEl.style.display='none';
   startScreen.style.display='';
 }
@@ -312,7 +308,7 @@ async function onResponderPress(player){
       updateMessages('⏱ Tempo esgotado! Rodada inválida.');
       startRound();
     }
-  },4000);
+  },4000); // 4 segundos
   updateMessages(`🎤 Jogador ${player}: fale agora!`);
   if(!isSpeechSupported()){
     updateMessages('Reconhecimento de voz não suportado');
@@ -366,9 +362,10 @@ async function processAnswer(player, spoken){
     return;
   }
   const normalized = removeDiacritics(rawWord.toLowerCase());
+  // Verifica se a palavra já foi usada
   if(palavrasUsadas.includes(normalized)){
     updateMessages(`⚠️ Palavra repetida — "${rawWord}"`);
-    setTimeout(startRound,1500);
+    setTimeout(startRound,1500); // sorteia novas letras
     return;
   }
   const l1=currentLetters[0].toLowerCase(), l2=currentLetters[1].toLowerCase();
@@ -377,11 +374,12 @@ async function processAnswer(player, spoken){
     updateMessages(`❌ ERRO — "${rawWord}" não contém ${currentLetters.join(', ')}`);
   }else{
     updateMessages(`✅ ACERTO — "${rawWord}" contém ${currentLetters.join(', ')}`);
-    palavrasUsadas.push(normalized);
+    palavrasUsadas.push(normalized); // registra palavra como usada
     if(player===1) score1++; else score2++;
   }
   setTimeout(startRound,1500);
 }
+// Atualiza mensagens para as duas telas
 function updateMessages(msg){
   message1.textContent = msg;
   message2.textContent = msg;
